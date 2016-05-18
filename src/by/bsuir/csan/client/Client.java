@@ -6,23 +6,10 @@ import java.net.Socket;
 public class Client {
 
     private static final int serverPort = 8888;
-    private static DataOutputStream out;
-
-    public void sendMessage(String message) {
-        try {
-            out.writeInt(message.length());
-            out.write(message.getBytes());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+    private static final String serverIP = "10.211.55.21"; //TODO replace with inetaddr chooser
 
     public static void main(String[] args) throws IOException {
-        Socket socket = new Socket("10.211.55.21", serverPort); //TODO replace with inetaddr chooser
-        out = new DataOutputStream(socket.getOutputStream());
-        Client client = new Client();
-        client.sendMessage("Bla");
-        client.sendMessage("QUIT");
-        socket.close();
+        Socket socket = new Socket(serverIP, serverPort);
+        new Thread(new ClientSession(socket)).start();
     }
 }

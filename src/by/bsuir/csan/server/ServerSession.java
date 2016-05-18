@@ -1,53 +1,75 @@
 package by.bsuir.csan.server;
 
+import by.bsuir.csan.session.Session;
+
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.Socket;
+import java.util.StringTokenizer;
 
-public class ServerSession extends Thread {
-    
-    private Socket clientSocket;
-    private DataInputStream socketInStream;
-    private DataOutputStream socketOutStream;
+public class ServerSession extends Session {
 
-    public ServerSession(Socket socket) throws IOException {
-        this.clientSocket = socket;
-        this.socketInStream = new DataInputStream(socket.getInputStream());
-        this.socketOutStream = new DataOutputStream(socket.getOutputStream());
-        log("Client connected");
-    }
+    private final static String HANDLER_HEAD = "handle";
 
-    private void log(String logMessage) {
-        System.out.println("From " + clientSocket.getInetAddress().getHostAddress() + ": " + logMessage);
-    }
+    private String username = null;
+    private String password = null;
 
-    private void handleClient() throws IOException {
-        int messageLength;
-        String textMessage = null;
+    private boolean isAuthorized() throws IOException {
+        if ((username == null) || (password == null)) {
+            sendMessage(NOT_AUTHORIZED_MSG);
+            return false;
+            //throw new SessionException("User not authorized");
+        }
 
-        do {
-            messageLength = socketInStream.readInt();
-            if (messageLength > 0) {
-                byte[] message = new byte[messageLength];
-                socketInStream.readFully(message, 0, messageLength);
-                textMessage = new String(message);
-                log(textMessage);
-            }
-        } while (!textMessage.equals("QUIT"));
+        return true;
     }
 
     @Override
-    public void run() {
-        try {
-            handleClient();
-            log("Client disconnected");
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
+    protected void handleSession() throws IOException {
+
+        String textMessage;
+
+        while ((textMessage = receiveMessage()) != null) {
+
+            StringTokenizer messageTokens = new StringTokenizer(textMessage);
+            String command = messageTokens.nextToken();
+            log(command, LogType.FROM);
+
+            if (command.equals(QUIT_CMD)) {
+                sendMessage(OK_MSG);
+                log(DISCONNECT_MSG, LogType.FROM);
+                socket.close();
+                return;
+            }
+
             try {
-                clientSocket.close();
-            } catch (IOException e) {
+                Method handleMethod = getClass().getMethod(HANDLER_HEAD + command, StringTokenizer.class);
+                handleMethod.invoke(this, messageTokens);
+            } catch (NoSuchMethodException e) {
+                sendMessage(COMMAND_MISSING_MSG);
+            } catch ( IllegalAccessException | InvocationTargetException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    public ServerSession(Socket socket) throws IOException {
+        super(socket);
+        log(CONNECT_MSG, LogType.FROM);
+    }
+
+    public void handleAUTH(StringTokenizer messageTokens) throws IOException {
+        username = messageTokens.nextToken();
+        password = messageTokens.nextToken();
+        if (isAuthorized()) {
+            sendMessage(OK_MSG);
+        }
+    }
+
+    public void handleCHECK(StringTokenizer messageTokes) throws IOException {
+        if (isAuthorized()) {
+            sendMessage(OK_MSG);
         }
     }
 }

@@ -6,12 +6,12 @@ import java.net.Socket;
 
 public class Server {
 
+    private static final String START_MSG = "SERVER START";
     private static final int serverPort = 8888;
 
     public static void main(String[] args) throws IOException {
         ServerSocket serverSocket = new ServerSocket(serverPort);
-
-        System.out.println("Server start");
+        System.out.println(START_MSG);
 
         do {
             Socket clientSocket = serverSocket.accept();
