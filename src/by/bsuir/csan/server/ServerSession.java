@@ -1,5 +1,6 @@
 package by.bsuir.csan.server;
 
+import by.bsuir.csan.server.user.User;
 import by.bsuir.csan.session.Session;
 
 import java.io.*;
@@ -59,9 +60,16 @@ public class ServerSession extends Session {
         log(CONNECT_MSG, LogType.FROM);
     }
 
+    public void handleSIGN(StringTokenizer messageTokens) throws IOException {
+
+    }
+
     public void handleAUTH(StringTokenizer messageTokens) throws IOException {
         username = messageTokens.nextToken();
         password = messageTokens.nextToken();
+
+        Server.putUser(new User(username, password));
+
         if (isAuthorized()) {
             sendMessage(OK_MSG);
         }

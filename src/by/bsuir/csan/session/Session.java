@@ -7,15 +7,15 @@ import java.net.Socket;
 
 public abstract class Session extends Thread {
 
-    protected final static String CONNECT_MSG = "CONNECTED";
-    protected final static String DISCONNECT_MSG = "DISCONNECTED";
-    protected final static String OK_MSG = "OK";
-    protected final static String NOT_AUTHORIZED_MSG = "YOU ARE NOT AUTHORIZED";
-    protected final static String COMMAND_MISSING_MSG = "INCORRECT COMMAND";
+    protected static final String CONNECT_MSG = "CONNECTED";
+    protected static final String DISCONNECT_MSG = "DISCONNECTED";
+    protected static final String OK_MSG = "OK";
+    protected static final String NOT_AUTHORIZED_MSG = "YOU ARE NOT AUTHORIZED";
+    protected static final String COMMAND_MISSING_MSG = "INCORRECT COMMAND";
 
-    protected final static String AUTH_CMD = "AUTH";
-    protected final static String CHECK_CMD = "CHECK";
-    protected final static String QUIT_CMD = "QUIT";
+    protected static final String AUTH_CMD = "AUTH";
+    protected static final String CHECK_CMD = "CHECK";
+    protected static final String QUIT_CMD = "QUIT";
 
     protected enum LogType {TO, FROM}
 
