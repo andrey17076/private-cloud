@@ -1,5 +1,7 @@
 package by.bsuir.csan.client;
 
+import by.bsuir.csan.session.ClientSession;
+
 import java.io.*;
 import java.net.Socket;
 

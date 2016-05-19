@@ -1,6 +1,7 @@
 package by.bsuir.csan.server;
 
 import by.bsuir.csan.server.user.User;
+import by.bsuir.csan.session.ServerSession;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -26,6 +27,10 @@ public class Server {
     private static void refreshUsersInfo() throws IOException {
         ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(usersInfo));
         out.writeObject(users);
+    }
+
+    public static ArrayList<User> getUsers() {
+        return users;
     }
 
     public static File getRootDir() {

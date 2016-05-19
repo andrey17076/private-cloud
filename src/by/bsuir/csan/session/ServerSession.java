@@ -1,12 +1,13 @@
-package by.bsuir.csan.server;
+package by.bsuir.csan.session;
 
+import by.bsuir.csan.server.Server;
 import by.bsuir.csan.server.user.User;
-import by.bsuir.csan.session.Session;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.StringTokenizer;
 
 public class ServerSession extends Session {
@@ -62,13 +63,31 @@ public class ServerSession extends Session {
 
     public void handleSIGN(StringTokenizer messageTokens) throws IOException {
 
+        username = messageTokens.nextToken();
+        password = messageTokens.nextToken();
+
+        ArrayList<User> users = Server.getUsers();
+
+        boolean isExists = false;
+
+        for (User user : users) {
+            if (user.getLogin().equals(username)) {
+                isExists = true;
+                break;
+            }
+        }
+
+        if (isExists) {
+            sendMessage(USER_EXISTS_MSG);
+        } else {
+            Server.putUser(new User(username, password));
+            sendMessage(OK_MSG);
+        }
     }
 
     public void handleAUTH(StringTokenizer messageTokens) throws IOException {
         username = messageTokens.nextToken();
         password = messageTokens.nextToken();
-
-        Server.putUser(new User(username, password));
 
         if (isAuthorized()) {
             sendMessage(OK_MSG);

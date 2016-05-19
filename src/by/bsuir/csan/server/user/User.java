@@ -18,6 +18,10 @@ public class User {
         this.userDir = new File(Server.getRootDir() + "/" + Integer.toString(login.hashCode()));
     }
 
+    public String getLogin() {
+        return login;
+    }
+
     public File getUserDir() {
         return userDir;
     }
