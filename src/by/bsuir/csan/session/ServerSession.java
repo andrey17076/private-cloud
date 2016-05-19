@@ -89,8 +89,27 @@ public class ServerSession extends Session {
         username = messageTokens.nextToken();
         password = messageTokens.nextToken();
 
-        if (isAuthorized()) {
+        ArrayList<User> users = Server.getUsers();
+
+        boolean isSignedUp = false;
+
+        for (User user : users) {
+            if (user.getLogin().equals(username)) {
+                if (user.getPassword().equals(password)) {
+                    isSignedUp = true;
+                } else {
+                    sendMessage(WRONG_PASSWORD_MSG);
+                }
+                break;
+            }
+        }
+
+        if (isSignedUp) {
             sendMessage(OK_MSG);
+        } else {
+            username = null;
+            password = null;
+            sendMessage(USER_NOT_EXISTS_MSG);
         }
     }
 
