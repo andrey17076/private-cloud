@@ -15,15 +15,31 @@ public class ClientSession extends Session {
         this.overrideOption = client.hasOverrideOption();
     }
 
+    public String signUp(String username, String password) throws IOException {
+        return getResponse(SIGN_CMD + " " + username + " " + password);
+    }
+
+    public String authenticate(String username, String password) throws IOException {
+        return getResponse(AUTH_CMD + " " + username + " " + password);
+    }
+
+    public String checkAuthentification() throws IOException {
+        return getResponse(CHECK_CMD);
+    }
+
+    public String quit() throws IOException {
+        return getResponse(QUIT_CMD);
+    }
+
     @Override
     protected void handleSession() throws IOException {
+
         String username = "user";
         String password = "pass";
 
-        log(getResponse(SIGN_CMD + " " + username + " " + password), LogType.FROM);
-        log(getResponse(AUTH_CMD + " " + username + " " + password), LogType.FROM);
-        //log(getResponse(CHECK_CMD), LogType.FROM);
-        log(getResponse(QUIT_CMD), LogType.FROM);
+        signUp(username, password);
+        quit();
+
         log("End of session"); //TODO debug
     }
 }

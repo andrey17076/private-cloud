@@ -28,31 +28,35 @@ public class ServerSession extends Session {
     }
 
     @Override
-    protected void handleSession() throws IOException {
+    protected void handleSession() {
 
         String textMessage;
 
-        while ((textMessage = receiveMessage()) != null) {
+        try {
+            while ((textMessage = receiveMessage()) != null) {
 
-            StringTokenizer messageTokens = new StringTokenizer(textMessage);
-            String command = messageTokens.nextToken();
-            log(command, LogType.FROM);
+                StringTokenizer messageTokens = new StringTokenizer(textMessage);
+                String command = messageTokens.nextToken();
+                log(command, LogType.FROM);
 
-            if (command.equals(QUIT_CMD)) {
-                sendMessage(OK_MSG);
-                log(DISCONNECT_MSG, LogType.FROM);
-                socket.close();
-                return;
+                if (command.equals(QUIT_CMD)) {
+                    sendMessage(OK_MSG);
+                    log(DISCONNECT_MSG, LogType.FROM);
+                    socket.close();
+                    return;
+                }
+
+                try {
+                    Method handleMethod = getClass().getMethod(HANDLER_HEAD + command, StringTokenizer.class);
+                    handleMethod.invoke(this, messageTokens);
+                } catch (NoSuchMethodException e) {
+                    sendMessage(COMMAND_MISSING_MSG);
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    e.printStackTrace();
+                }
             }
-
-            try {
-                Method handleMethod = getClass().getMethod(HANDLER_HEAD + command, StringTokenizer.class);
-                handleMethod.invoke(this, messageTokens);
-            } catch (NoSuchMethodException e) {
-                sendMessage(COMMAND_MISSING_MSG);
-            } catch ( IllegalAccessException | InvocationTargetException e) {
-                e.printStackTrace();
-            }
+        } catch (IOException e) {
+            log(DISCONNECT_MSG, LogType.FROM);
         }
     }
 

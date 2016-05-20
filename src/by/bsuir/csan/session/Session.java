@@ -64,7 +64,9 @@ public abstract class Session extends Thread {
 
     protected String getResponse(String request) throws IOException {
         sendMessage(request);
-        return receiveMessage();
+        String response = receiveMessage();
+        log(response, LogType.FROM);
+        return response;
     }
 
     @Override
