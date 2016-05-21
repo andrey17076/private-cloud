@@ -14,11 +14,11 @@ public class ServerSession extends Session {
 
     private final static String HANDLER_HEAD = "handle";
 
-    private String username = null;
-    private String password = null;
+    private User user = null;
 
     private boolean isAuthorized() throws IOException {
-        if ((username == null) || (password == null)) {
+
+        if (user == null) {
             sendMessage(NOT_AUTHORIZED_MSG);
             return false;
             //throw new SessionException("User not authorized");
@@ -33,19 +33,12 @@ public class ServerSession extends Session {
         String textMessage;
 
         try {
+
             while ((textMessage = receiveMessage()) != null) {
 
                 StringTokenizer messageTokens = new StringTokenizer(textMessage);
                 String command = messageTokens.nextToken();
                 log(command, LogType.FROM);
-
-                if (command.equals(QUIT_CMD)) {
-                    sendMessage(OK_MSG);
-                    log(DISCONNECT_MSG, LogType.FROM);
-                    socket.close();
-                    return;
-                }
-
                 try {
                     Method handleMethod = getClass().getMethod(HANDLER_HEAD + command, StringTokenizer.class);
                     handleMethod.invoke(this, messageTokens);
@@ -55,7 +48,8 @@ public class ServerSession extends Session {
                     e.printStackTrace();
                 }
             }
-        } catch (IOException e) {
+
+        } catch (IOException e) { //in case when socket was closed
             log(DISCONNECT_MSG, LogType.FROM);
         }
     }
@@ -67,15 +61,15 @@ public class ServerSession extends Session {
 
     public void handleSIGN(StringTokenizer messageTokens) throws IOException {
 
-        username = messageTokens.nextToken();
-        password = messageTokens.nextToken();
+        String username = messageTokens.nextToken();
+        String password = messageTokens.nextToken();
 
         ArrayList<User> users = Server.getUsers();
 
         boolean isExists = false;
 
-        for (User user : users) {
-            if (user.getLogin().equals(username)) {
+        for (User u : users) {
+            if (u.getLogin().equals(username)) {
                 isExists = true;
                 break;
             }
@@ -90,19 +84,22 @@ public class ServerSession extends Session {
     }
 
     public void handleAUTH(StringTokenizer messageTokens) throws IOException {
-        username = messageTokens.nextToken();
-        password = messageTokens.nextToken();
+
+        String username = messageTokens.nextToken();
+        String password = messageTokens.nextToken();
 
         ArrayList<User> users = Server.getUsers();
 
         boolean isSignedUp = false;
 
-        for (User user : users) {
-            if (user.getLogin().equals(username)) {
-                if (user.getPassword().equals(password)) {
+        for (User u : users) {
+            if (u.getLogin().equals(username)) {
+                if (u.getPassword().equals(password)) {
                     isSignedUp = true;
+                    this.user = u;
                 } else {
                     sendMessage(WRONG_PASSWORD_MSG);
+                    return;
                 }
                 break;
             }
@@ -111,15 +108,24 @@ public class ServerSession extends Session {
         if (isSignedUp) {
             sendMessage(OK_MSG);
         } else {
-            username = null;
-            password = null;
+//            username = null;
+//            password = null;
             sendMessage(USER_NOT_EXISTS_MSG);
         }
     }
 
-    public void handleCHECK(StringTokenizer messageTokes) throws IOException {
+    public void handleHASH(StringTokenizer messageTokens) throws IOException {
+
+    }
+
+    public void handleCHECK(StringTokenizer messageTokens) throws IOException {
         if (isAuthorized()) {
             sendMessage(OK_MSG);
         }
+    }
+
+    public void handleQUIT(StringTokenizer messageTokens) throws IOException {
+        sendMessage(OK_MSG);
+        socket.close();
     }
 }

@@ -19,11 +19,11 @@ public class ClientSession extends Session {
         return getResponse(SIGN_CMD + " " + username + " " + password);
     }
 
-    public String authenticate(String username, String password) throws IOException {
+    public String authorize(String username, String password) throws IOException {
         return getResponse(AUTH_CMD + " " + username + " " + password);
     }
 
-    public String checkAuthentification() throws IOException {
+    public String checkAuthorization() throws IOException {
         return getResponse(CHECK_CMD);
     }
 
@@ -33,13 +33,11 @@ public class ClientSession extends Session {
 
     @Override
     protected void handleSession() throws IOException {
+        try {
 
-        String username = "user";
-        String password = "pass";
-
-        signUp(username, password);
-        quit();
-
-        log("End of session"); //TODO debug
+            Thread.sleep(3*1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }

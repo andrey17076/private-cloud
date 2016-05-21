@@ -39,8 +39,18 @@ public class Client {
     }
 
     public static void main(String[] args) throws IOException {
-        Client client = new Client();
 
-        new Thread(new ClientSession(client)).start();
+        Client client = new Client();
+        ClientSession clientSession = new ClientSession(client);
+
+        String username = "user";
+        String password = "pass";
+
+        clientSession.signUp(username, password);
+        clientSession.authorize(username, password);
+        clientSession.checkAuthorization();
+        clientSession.quit();
+
+        new Thread(clientSession).start();
     }
 }

@@ -12,12 +12,13 @@ public abstract class Session extends Thread {
     protected static final String OK_MSG = "OK";
     protected static final String NOT_AUTHORIZED_MSG = "YOU ARE NOT AUTHORIZED";
     protected static final String USER_EXISTS_MSG = "USER WITH THIS LOGIN IS ALREADY EXISTS";
-    protected static final String USER_NOT_EXISTS_MSG = "USER WITH THIS LOGIN NOT SIGNED UP";
+    protected static final String USER_NOT_EXISTS_MSG = "WRONG LOGIN";
     protected static final String WRONG_PASSWORD_MSG = "WRONG PASSWORD";
     protected static final String COMMAND_MISSING_MSG = "INCORRECT COMMAND";
 
     protected static final String SIGN_CMD = "SIGN";
     protected static final String AUTH_CMD = "AUTH";
+    protected static final String HASH_CMD = "HASH";
     protected static final String CHECK_CMD = "CHECK";
     protected static final String QUIT_CMD = "QUIT";
 
