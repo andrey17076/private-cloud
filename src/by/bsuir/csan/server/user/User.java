@@ -3,13 +3,16 @@ package by.bsuir.csan.server.user;
 import by.bsuir.csan.server.Server;
 
 import java.io.File;
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 
-public class User {
+public class User implements Serializable {
 
     private String login;
     private String password; //TODO replace with pass hash
     private File userDir;
+    private ArrayList<Integer> hashes = new ArrayList<>();
     private HashMap<Integer, File> userFiles = new HashMap<>();
 
     public User(String login, String password) {
@@ -31,6 +34,12 @@ public class User {
     }
 
     public void putFile(File file) {
-        userFiles.put(file.hashCode(), file);
+        int hash = file.hashCode();
+        hashes.add(hash);
+        userFiles.put(hash, file);
+    }
+
+    public ArrayList<Integer> getHashes() {
+        return hashes;
     }
 }

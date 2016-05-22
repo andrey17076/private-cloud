@@ -17,6 +17,7 @@ public class Server {
 
     private static final String START_MSG = "SERVER START";
     private static final String ROOT_DIR_CREATED_MSG = "ROOT DIR CREATED";
+    private static final String CANT_PUT_USER_MSG = "CAN'T PUT NEW USER INFO";
 
     private static final int serverPort = 8888;
 
@@ -24,9 +25,20 @@ public class Server {
         System.out.println(message);
     }
 
-    private static void refreshUsersInfo() throws IOException {
-        ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(usersInfo));
+    private static void saveUsersInfo() throws IOException {
+        FileOutputStream fos = new FileOutputStream(usersInfo, false);
+        ObjectOutputStream out = new ObjectOutputStream(fos);
         out.writeObject(users);
+        fos.close();
+        out.close();
+    }
+
+    private static void loadUsersInfo() throws IOException, ClassNotFoundException {
+        FileInputStream fin = new FileInputStream(usersInfo);
+        ObjectInputStream oin = new ObjectInputStream(fin);
+        users = (ArrayList<User>) oin.readObject();
+        oin.close();
+        fin.close();
     }
 
     public static ArrayList<User> getUsers() {
@@ -39,9 +51,16 @@ public class Server {
 
     public static void putUser(User user) {
         users.add(user);
+
         File userDir = user.getUserDir();
         if (!userDir.exists()) {
             userDir.mkdir();
+        }
+
+        try {
+            saveUsersInfo();
+        } catch (IOException e) {
+            log(CANT_PUT_USER_MSG);
         }
     }
 
@@ -51,12 +70,11 @@ public class Server {
 
         if (!rootDir.exists()) {
             rootDir.mkdir();
-            refreshUsersInfo();
+            saveUsersInfo();
             log(ROOT_DIR_CREATED_MSG);
         }
 
-        ObjectInputStream in = new ObjectInputStream(new FileInputStream(usersInfo));
-        users = (ArrayList<User>) in.readObject();
+        loadUsersInfo();
 
         do {
             Socket clientSocket = serverSocket.accept();
