@@ -21,7 +21,6 @@ public class ServerSession extends Session {
         if (user == null) {
             sendMessage(NOT_AUTHORIZED_MSG);
             return false;
-            //throw new SessionException("User not authorized");
         }
 
         return true;
@@ -33,12 +32,10 @@ public class ServerSession extends Session {
         String textMessage;
 
         try {
-
             while ((textMessage = receiveMessage()) != null) {
 
                 StringTokenizer messageTokens = new StringTokenizer(textMessage);
                 String command = messageTokens.nextToken();
-                log(command, LogType.FROM);
                 try {
                     Method handleMethod = getClass().getMethod(HANDLER_HEAD + command, StringTokenizer.class);
                     handleMethod.invoke(this, messageTokens);
@@ -108,13 +105,35 @@ public class ServerSession extends Session {
         if (isSignedUp) {
             sendMessage(OK_MSG);
         } else {
-//            username = null;
-//            password = null;
             sendMessage(USER_NOT_EXISTS_MSG);
         }
     }
 
     public void handleHASH(StringTokenizer messageTokens) throws IOException {
+        if (isAuthorized()) {
+            ArrayList<Integer> hashes = user.getHashes();
+            new ObjectOutputStream(outStream).writeObject(hashes);
+            sendMessage(OK_MSG);
+        } else {
+            sendMessage(NOT_AUTHORIZED_MSG);
+        }
+    }
+
+    public void handleSTORE(StringTokenizer messageTokens) throws IOException {
+
+        if (isAuthorized()) {
+
+            String filePath = user.getUserDir().getPath() + "/" + messageTokens.nextToken();
+            File file = receiveFile(filePath);
+            user.putFile(file);
+
+            sendMessage(OK_MSG);
+        } else {
+            sendMessage(NOT_AUTHORIZED_MSG);
+        }
+    }
+
+    public void handleLOAD(StringTokenizer messageTokens) throws IOException {
 
     }
 

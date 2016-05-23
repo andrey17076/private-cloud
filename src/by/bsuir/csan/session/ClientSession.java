@@ -1,8 +1,7 @@
 package by.bsuir.csan.session;
 import by.bsuir.csan.client.Client;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 
 public class ClientSession extends Session {
 
@@ -27,6 +26,16 @@ public class ClientSession extends Session {
         return getResponse(CHECK_CMD);
     }
 
+    public String storeFileOnServer(String filePath) throws IOException {
+
+        sendMessage(STORE_CMD + " " + filePath);
+
+        File file = new File(rootDir + "/" + filePath);
+        sendFile(file);
+
+        return receiveMessage();
+    }
+
     public String quit() throws IOException {
         return getResponse(QUIT_CMD);
     }
@@ -34,7 +43,9 @@ public class ClientSession extends Session {
     @Override
     protected void handleSession() throws IOException {
         try {
-
+            //getResponse(HASH_CMD);
+            //ObjectInputStream ois = new ObjectInputStream(inStream);
+            //ArrayList<Integer> serverHashes = (ArrayList<Integer>) ois.readObject();
             Thread.sleep(3*1000);
         } catch (InterruptedException e) {
             e.printStackTrace();

@@ -1,8 +1,6 @@
 package by.bsuir.csan.session;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 
 public abstract class Session extends Thread {
@@ -19,21 +17,32 @@ public abstract class Session extends Thread {
     protected static final String SIGN_CMD = "SIGN";
     protected static final String AUTH_CMD = "AUTH";
     protected static final String HASH_CMD = "HASH";
+    protected static final String STORE_CMD = "STORE";
+    protected static final String LOAD_CMD = "LOAD";
     protected static final String CHECK_CMD = "CHECK";
     protected static final String QUIT_CMD = "QUIT";
 
+
+    protected static final int BUFFER_SIZE = 1024;
     protected enum LogType {TO, FROM}
+    protected byte[] buffer = new byte[BUFFER_SIZE];
 
     protected Socket socket;
-    protected DataInputStream inStream;
-    protected DataOutputStream outStream;
+
+    protected InputStream inStream;
+    protected OutputStream outStream;
+
+    protected DataInputStream dataInputStream;
+    protected DataOutputStream dataOutputStream;
 
     protected abstract void handleSession() throws IOException;
 
     public Session(Socket socket) throws IOException {
         this.socket = socket;
-        inStream = new DataInputStream(socket.getInputStream());
-        outStream = new DataOutputStream(socket.getOutputStream());
+        this.inStream = socket.getInputStream();
+        this.outStream = socket.getOutputStream();
+        this.dataInputStream = new DataInputStream(inStream);
+        this.dataOutputStream = new DataOutputStream(outStream);
     }
 
     protected void log(String logMessage) {
@@ -47,27 +56,53 @@ public abstract class Session extends Thread {
     protected String receiveMessage() throws IOException {
         String textMessage = null;
 
-        int messageLength = inStream.readInt();
+        int messageLength = dataInputStream.readInt();
         if (messageLength > 0) {
             byte[] message = new byte[messageLength];
-            inStream.readFully(message, 0, messageLength);
+            dataInputStream.readFully(message, 0, messageLength);
             textMessage = new String(message);
         }
 
+        log(textMessage, LogType.FROM);
         return textMessage;
     }
 
     protected void sendMessage(String message) throws IOException {
-        outStream.writeInt(message.length());
-        outStream.write(message.getBytes());
+        dataOutputStream.writeInt(message.length());
+        dataOutputStream.write(message.getBytes());
+        dataOutputStream.flush();
         log(message, LogType.TO);
     }
 
     protected String getResponse(String request) throws IOException {
         sendMessage(request);
-        String response = receiveMessage();
-        log(response, LogType.FROM);
-        return response;
+        return receiveMessage();
+    }
+
+    protected void sendFile(File file) throws IOException {
+        FileInputStream fin = new FileInputStream(file);
+
+        int length;
+        while ((length = fin.read(buffer)) > 0) {
+            dataOutputStream.write(buffer, 0, length);
+            dataOutputStream.flush();
+        }
+
+        fin.close();
+    }
+
+    protected File receiveFile(String filePath) throws IOException {
+        File file = new File(filePath);
+        FileOutputStream fos = new FileOutputStream(file, false);
+
+        int length;
+        while (dataInputStream.available() > 0) {
+            length = dataInputStream.read(buffer, 0, BUFFER_SIZE);
+            fos.write(buffer, 0, length);
+            fos.flush();
+        }
+        fos.close();
+        return file;
     }
 
     @Override
@@ -79,6 +114,10 @@ public abstract class Session extends Thread {
         } finally {
             try {
                 socket.close();
+                inStream.close();
+                outStream.close();
+                dataInputStream.close();
+                dataOutputStream.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
