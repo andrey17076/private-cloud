@@ -111,8 +111,8 @@ public class ServerSession extends Session {
 
     public void handleHASH(StringTokenizer messageTokens) throws IOException {
         if (isAuthorized()) {
-            ArrayList<Integer> hashes = user.getHashes();
-            new ObjectOutputStream(outStream).writeObject(hashes);
+            ArrayList<String> hashes = user.getHashes();
+            new ObjectOutputStream(dataOutputStream).writeObject(hashes);
             sendMessage(OK_MSG);
         } else {
             sendMessage(NOT_AUTHORIZED_MSG);

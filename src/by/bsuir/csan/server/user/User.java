@@ -1,5 +1,6 @@
 package by.bsuir.csan.server.user;
 
+import by.bsuir.csan.helpers.HashHelper;
 import by.bsuir.csan.server.Server;
 
 import java.io.File;
@@ -12,8 +13,8 @@ public class User implements Serializable {
     private String login;
     private String password; //TODO replace with pass hash
     private File userDir;
-    private ArrayList<Integer> hashes = new ArrayList<>();
-    private HashMap<Integer, File> userFiles = new HashMap<>();
+    private ArrayList<String> hashes = new ArrayList<>();
+    private HashMap<String, File> userFiles = new HashMap<>();
 
     public User(String login, String password) {
         this.login = login;
@@ -34,12 +35,15 @@ public class User implements Serializable {
     }
 
     public void putFile(File file) {
-        int hash = file.hashCode();
-        hashes.add(hash);
-        userFiles.put(hash, file);
+        String hash = HashHelper.getChecksum(file);
+        System.out.println(hash); //TODO debug
+        if (!hashes.contains(hash)) {
+            hashes.add(hash);
+            userFiles.put(hash, file);
+        }
     }
 
-    public ArrayList<Integer> getHashes() {
+    public ArrayList<String> getHashes() {
         return hashes;
     }
 }

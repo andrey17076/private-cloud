@@ -2,6 +2,7 @@ package by.bsuir.csan.session;
 import by.bsuir.csan.client.Client;
 
 import java.io.*;
+import java.util.ArrayList;
 
 public class ClientSession extends Session {
 
@@ -40,14 +41,19 @@ public class ClientSession extends Session {
         return getResponse(QUIT_CMD);
     }
 
+
     @Override
     protected void handleSession() throws IOException {
         try {
-            //getResponse(HASH_CMD);
-            //ObjectInputStream ois = new ObjectInputStream(inStream);
-            //ArrayList<Integer> serverHashes = (ArrayList<Integer>) ois.readObject();
-            Thread.sleep(3*1000);
-        } catch (InterruptedException e) {
+            while (true) { //TODO replace with smth correct
+                sendMessage(HASH_CMD);
+                ObjectInputStream ois = new ObjectInputStream(dataInputStream);
+                ArrayList<String> serverHashes = (ArrayList<String>) ois.readObject();
+                receiveMessage();
+                serverHashes.forEach(System.out::println); //TODO debug
+                Thread.sleep(5 * 1000); //five seconds
+            }
+        } catch (InterruptedException | ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
