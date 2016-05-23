@@ -93,6 +93,9 @@ public abstract class Session extends Thread {
 
     protected File receiveFile(String filePath) throws IOException {
         File file = new File(filePath);
+        file.getParentFile().mkdir();
+        file.createNewFile();
+
         FileOutputStream fos = new FileOutputStream(file, false);
 
         int length;
