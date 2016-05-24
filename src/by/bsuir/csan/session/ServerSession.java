@@ -131,10 +131,23 @@ public class ServerSession extends Session {
         } else {
             sendMessage(NOT_AUTHORIZED_MSG);
         }
+        Server.saveUsersInfo();
     }
 
     public void handleLOAD(StringTokenizer messageTokens) throws IOException {
-
+        if (isAuthorized()) {
+            String filePath = user.getUserDir().getPath() + "/" + messageTokens.nextToken();
+            File file = user.getFile(filePath);
+            if (file != null) {
+                sendMessage(OK_MSG);
+                sendFile(file);
+            } else {
+                sendMessage(NOT_FOUND_MSG);
+            }
+        } else {
+            sendMessage(NOT_AUTHORIZED_MSG);
+        }
+        Server.saveUsersInfo();
     }
 
     public void handleCHECK(StringTokenizer messageTokens) throws IOException {

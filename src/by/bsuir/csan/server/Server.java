@@ -25,7 +25,7 @@ public class Server {
         System.out.println(message);
     }
 
-    private static void saveUsersInfo() throws IOException {
+    public static void saveUsersInfo() throws IOException {
         FileOutputStream fos = new FileOutputStream(usersInfo, false);
         ObjectOutputStream out = new ObjectOutputStream(fos);
         out.writeObject(users);

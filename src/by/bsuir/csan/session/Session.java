@@ -13,6 +13,7 @@ public abstract class Session extends Thread {
     protected static final String USER_NOT_EXISTS_MSG = "WRONG LOGIN";
     protected static final String WRONG_PASSWORD_MSG = "WRONG PASSWORD";
     protected static final String COMMAND_MISSING_MSG = "INCORRECT COMMAND";
+    protected static final String NOT_FOUND_MSG = "NOT FOUND";
 
     protected static final String SIGN_CMD = "SIGN";
     protected static final String AUTH_CMD = "AUTH";
@@ -55,7 +56,6 @@ public abstract class Session extends Thread {
 
     protected String receiveMessage() throws IOException {
         String textMessage = null;
-
         int messageLength = dataInputStream.readInt();
         if (messageLength > 0) {
             byte[] message = new byte[messageLength];

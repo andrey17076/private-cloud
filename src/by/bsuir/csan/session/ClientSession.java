@@ -37,6 +37,15 @@ public class ClientSession extends Session {
         return receiveMessage();
     }
 
+    public String loadFileFromServer(String filePath) throws IOException {
+        sendMessage(LOAD_CMD + " " + filePath);
+        String response = receiveMessage();
+        if (response.equals(OK_MSG)) {
+            receiveFile(rootDir + "/" + filePath);
+        }
+        return response;
+    }
+
     public String quit() throws IOException {
         return getResponse(QUIT_CMD);
     }

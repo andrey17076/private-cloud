@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 
 public class User implements Serializable {
 
@@ -34,9 +35,24 @@ public class User implements Serializable {
         return userDir;
     }
 
+    public File getFile(String filePath) {
+        File tmp_file;
+        Iterator<File> iterator = userFiles.values().iterator();
+        while (iterator.hasNext()) {
+            tmp_file = iterator.next();
+            if (tmp_file.getPath().equals(filePath)) {
+                return tmp_file;
+            }
+        }
+        return null;
+    }
+
     public void putFile(File file) {
-        String hash = HashHelper.getChecksum(file);
-        System.out.println(hash); //TODO debug
+
+        String contentHash = HashHelper.getChecksum(file);
+        String pathHash = Integer.toString(file.hashCode());
+        String hash = pathHash + contentHash;
+
         if (!hashes.contains(hash)) {
             hashes.add(hash);
             userFiles.put(hash, file);
