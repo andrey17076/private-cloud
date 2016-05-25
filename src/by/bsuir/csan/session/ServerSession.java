@@ -111,8 +111,8 @@ public class ServerSession extends Session {
 
     public void handleHASH(StringTokenizer messageTokens) throws IOException {
         if (isAuthorized()) {
-            ArrayList<String> hashes = user.getHashes();
-            new ObjectOutputStream(dataOutputStream).writeObject(hashes);
+            sendMessage(START_LOADING_MSG);
+            sendFilesHashes(user.getFilesHashes());
             sendMessage(OK_MSG);
         } else {
             sendMessage(NOT_AUTHORIZED_MSG);
@@ -122,11 +122,10 @@ public class ServerSession extends Session {
     public void handleSTORE(StringTokenizer messageTokens) throws IOException {
 
         if (isAuthorized()) {
-
-            String filePath = user.getUserDir().getPath() + "/" + messageTokens.nextToken();
-            File file = receiveFile(filePath);
+            sendMessage(START_LOADING_MSG);
+            String filePath = messageTokens.nextToken();
+            File file = receiveFile(new File(user.getUserDir().getPath() + "/" + filePath));
             user.putFile(file);
-
             sendMessage(OK_MSG);
         } else {
             sendMessage(NOT_AUTHORIZED_MSG);
@@ -134,13 +133,14 @@ public class ServerSession extends Session {
         Server.saveUsersInfo();
     }
 
-    public void handleLOAD(StringTokenizer messageTokens) throws IOException {
+    public void handleRETR(StringTokenizer messageTokens) throws IOException {
         if (isAuthorized()) {
+            sendMessage(START_LOADING_MSG);
             String filePath = user.getUserDir().getPath() + "/" + messageTokens.nextToken();
             File file = user.getFile(filePath);
             if (file != null) {
-                sendMessage(OK_MSG);
                 sendFile(file);
+                sendMessage(OK_MSG);
             } else {
                 sendMessage(NOT_FOUND_MSG);
             }

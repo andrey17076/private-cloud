@@ -24,7 +24,7 @@ public class HashHelper {
         return complete.digest();
     }
 
-    public static String getChecksum(File file) {
+    public static String getHash(File file) {
 
         byte[] hashBytes = new byte[0];
 

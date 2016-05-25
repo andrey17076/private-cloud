@@ -2,6 +2,7 @@ package by.bsuir.csan.session;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.HashMap;
 
 public abstract class Session extends Thread {
 
@@ -13,13 +14,15 @@ public abstract class Session extends Thread {
     protected static final String USER_NOT_EXISTS_MSG = "WRONG LOGIN";
     protected static final String WRONG_PASSWORD_MSG = "WRONG PASSWORD";
     protected static final String COMMAND_MISSING_MSG = "INCORRECT COMMAND";
+    protected static final String UNKNOWN_MESSAGE_MSG = "UNKNOWN MESSAGE";
     protected static final String NOT_FOUND_MSG = "NOT FOUND";
+    protected static final String START_LOADING_MSG = "LOADING STARTS";
 
     protected static final String SIGN_CMD = "SIGN";
     protected static final String AUTH_CMD = "AUTH";
     protected static final String HASH_CMD = "HASH";
     protected static final String STORE_CMD = "STORE";
-    protected static final String LOAD_CMD = "LOAD";
+    protected static final String RETR_CMD = "RETR";
     protected static final String CHECK_CMD = "CHECK";
     protected static final String QUIT_CMD = "QUIT";
 
@@ -46,21 +49,22 @@ public abstract class Session extends Thread {
         this.dataOutputStream = new DataOutputStream(outStream);
     }
 
-    protected void log(String logMessage) {
-        System.out.println(logMessage);
-    }
-
     protected void log(String logMessage, LogType type) {
         System.out.println(type.name() + " " + socket.getInetAddress().getHostAddress() + ": " + logMessage);
     }
 
     protected String receiveMessage() throws IOException {
-        String textMessage = null;
+
+        while (dataInputStream.available() == 0);
+
+        String textMessage;
         int messageLength = dataInputStream.readInt();
         if (messageLength > 0) {
             byte[] message = new byte[messageLength];
             dataInputStream.readFully(message, 0, messageLength);
             textMessage = new String(message);
+        } else {
+            textMessage = UNKNOWN_MESSAGE_MSG;
         }
 
         log(textMessage, LogType.FROM);
@@ -91,8 +95,10 @@ public abstract class Session extends Thread {
         fin.close();
     }
 
-    protected File receiveFile(String filePath) throws IOException {
-        File file = new File(filePath);
+    protected File receiveFile(File file) throws IOException {
+
+        while (dataInputStream.available() == 0);
+
         file.getParentFile().mkdir();
         file.createNewFile();
 
@@ -106,6 +112,24 @@ public abstract class Session extends Thread {
         }
         fos.close();
         return file;
+    }
+
+    protected void sendFilesHashes(HashMap<File, String> filesHashes) throws IOException {
+
+        ObjectOutputStream oos = new ObjectOutputStream(dataOutputStream);
+        oos.writeObject(filesHashes);
+        oos.flush();
+
+    }
+
+    protected HashMap<File, String> receiveFilesHashes() throws IOException, ClassNotFoundException {
+
+        while (dataInputStream.available() == 0);
+
+        ObjectInputStream ois = new ObjectInputStream(dataInputStream);
+        HashMap<File, String> filesHashes = (HashMap<File, String>) ois.readObject();
+
+        return filesHashes;
     }
 
     @Override

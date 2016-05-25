@@ -5,17 +5,14 @@ import by.bsuir.csan.server.Server;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 
 public class User implements Serializable {
 
     private String login;
     private String password; //TODO replace with pass hash
     private File userDir;
-    private ArrayList<String> hashes = new ArrayList<>();
-    private HashMap<String, File> userFiles = new HashMap<>();
+    private HashMap<File, String> userFilesHashes = new HashMap<>();
 
     public User(String login, String password) {
         this.login = login;
@@ -36,30 +33,20 @@ public class User implements Serializable {
     }
 
     public File getFile(String filePath) {
-        File tmp_file;
-        Iterator<File> iterator = userFiles.values().iterator();
-        while (iterator.hasNext()) {
-            tmp_file = iterator.next();
-            if (tmp_file.getPath().equals(filePath)) {
-                return tmp_file;
-            }
+        if (userFilesHashes.containsKey(new File(filePath))) {
+            String serverFilePath = userDir + "/" + filePath;
+            return new File(serverFilePath);
         }
         return null;
     }
 
     public void putFile(File file) {
-
-        String contentHash = HashHelper.getChecksum(file);
-        String pathHash = Integer.toString(file.hashCode());
-        String hash = pathHash + contentHash;
-
-        if (!hashes.contains(hash)) {
-            hashes.add(hash);
-            userFiles.put(hash, file);
-        }
+        String hash = HashHelper.getHash(file);
+        String filePath = file.getPath().replaceFirst(userDir.getPath() + "/", "");
+        userFilesHashes.put(new File(filePath), hash);
     }
 
-    public ArrayList<String> getHashes() {
-        return hashes;
+    public HashMap<File, String> getFilesHashes() {
+        return userFilesHashes;
     }
 }
