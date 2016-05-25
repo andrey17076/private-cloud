@@ -11,7 +11,7 @@ public class Client {
     private static final String serverIP = "10.211.55.21"; //TODO replace with inetaddr chooser
 
     private Socket socket;
-    private static File rootDir = new File("root"); //TODO replace with custom dir
+    private static File rootDir = new File("_root"); //TODO replace with custom dir
     private boolean overrideOption = true; //TODO user must choose
 
     public Client() throws IOException {
@@ -49,8 +49,8 @@ public class Client {
         clientSession.signUp(username, password);
         clientSession.authorize(username, password);
         clientSession.checkAuthorization();
-        clientSession.storeFileOnServer("1.txt");
-        clientSession.quit();
+
+//        clientSession.quit();
 
         new Thread(clientSession).start();
     }

@@ -135,10 +135,10 @@ public class ServerSession extends Session {
 
     public void handleRETR(StringTokenizer messageTokens) throws IOException {
         if (isAuthorized()) {
-            sendMessage(START_LOADING_MSG);
             String filePath = user.getUserDir().getPath() + "/" + messageTokens.nextToken();
             File file = user.getFile(filePath);
             if (file != null) {
+                sendMessage(START_LOADING_MSG);
                 sendFile(file);
                 sendMessage(OK_MSG);
             } else {

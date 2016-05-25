@@ -16,7 +16,7 @@ public class ClientSession extends Session {
         this.rootDir = client.getRootDir();
         this.overrideOption = client.hasOverrideOption();
         this.userInfoFile = new File("users.info");
-        saveClientFilesInfo(getFilesIn(rootDir));
+        saveClientFilesInfo(new HashMap<>());
     }
 
     public void saveClientFilesInfo(HashMap<File, String> userFilesInfo) throws IOException {
@@ -87,17 +87,23 @@ public class ClientSession extends Session {
     protected void handleSession() throws IOException {
         try {
             while (true) { //TODO replace with smth correct
-                Thread.sleep(10 * 1000); //ten seconds
+                Thread.sleep(10 * 1000);
                 String response = getResponse(HASH_CMD);
-                if (response.equals(OK_MSG)) {
+                if (response.equals(START_LOADING_MSG)) {
 
                     HashMap<File, String> serverHashes = receiveFilesHashes();
                     HashMap<File, String> clientHashes = getFilesIn(rootDir);
                     HashMap<File, String> oldHashes = getClientFilesInfo();
-                    System.out.println(serverHashes); //TODO debug
-                    System.out.println(clientHashes); //TODO debug
-                    System.out.println(oldHashes); //TODO debug
+                    HashMap<File, String> handledServerHashes = new HashMap<>();
+                    HashMap<File, String> clientHashesToDelete = new HashMap<>();
+                    receiveMessage();
+
+                    System.out.println("BEFORE============================="); //TODO debug
+                    System.out.println("Server hashes " + serverHashes); //TODO debug
+                    System.out.println("Client hashes " + clientHashes); //TODO debug
+                    System.out.println("Old    hashes " + oldHashes); //TODO debug
                     System.out.println("==================================="); //TODO debug
+
                     for (File clientFile : clientHashes.keySet()) {
 
                         boolean isExistsOnServer = false;
@@ -105,42 +111,54 @@ public class ClientSession extends Session {
                         for (File serverFile : serverHashes.keySet()) {
                             if (clientFile.equals(serverFile)) {
                                 isExistsOnServer = true;
+                                handledServerHashes.put(serverFile, serverHashes.get(serverFile));
 
-//                                if (!serverHashes.get(serverFile).equals(clientHashes.get(clientFile))) {
-//                                    if (clientHashes.get(clientFile).equals(oldHashes.get(clientFile))) {
-//                                        loadFileFromServer(clientFile.getPath());
-//                                    } else {
-//                                        storeFileOnServer(clientFile.getPath());
-//                                    }
-//                                }
-//
-                                serverHashes.remove(serverFile);
+                                if (!serverHashes.get(serverFile).equals(clientHashes.get(clientFile))) {
+                                    if (clientHashes.get(clientFile).equals(oldHashes.get(clientFile))) {
+                                        retrieveFileFromServer(serverFile);
+                                        clientHashes.put(serverFile, serverHashes.get(serverFile));
+                                    } else {
+                                        storeFileOnServer(clientFile);
+                                    }
+                                }
                             }
                         }
 
-                        System.out.println(serverHashes); //TODO debug
-                        System.out.println(clientHashes); //TODO debug
-                        System.out.println(oldHashes); //TODO debug
-
-//                        if (!isExistsOnServer) {
-//                            if (oldHashes.containsKey(clientFile)) {
-//                                clientHashes.remove(clientFile);
-//                                clientFile.delete();
-//                            } else {
-//                                storeFileOnServer(clientFile.getPath());
-//                            }
-//                        }
-//
+                        if (!isExistsOnServer) { //TODO add override option checking
+                            if (oldHashes.containsKey(clientFile)) {
+                                clientHashesToDelete.put(clientFile, clientHashes.get(clientFile));
+                            } else {
+                                storeFileOnServer(clientFile);
+                            }
+                        }
                     }
-//
-//                    //Load all files, which are on the server, but don't exist on client side
-//                    for (File serverFile : serverHashes.keySet()) {
-//                        loadFileFromServer(serverFile.getPath());
-//                        clientHashes.put(serverFile, serverHashes.get(serverFile));
-//                    }
+
+                    System.out.println("PRE================================"); //TODO debug
+                    System.out.println("Server hashes " + serverHashes); //TODO debug
+                    System.out.println("Client hashes " + clientHashes); //TODO debug
+                    System.out.println("Handle hashes " + handledServerHashes); //TODO debug
+                    System.out.println("Delete hashes " + clientHashesToDelete); //TODO debug
+
+                    clientHashesToDelete.keySet().forEach((file) -> {
+                        clientHashes.remove(file);
+                        file.delete();
+                    });
+
+                    handledServerHashes.forEach(serverHashes::remove);
+
+                    //Load all files, which are on the server, but don't exist on client side
+                    for (File serverFile : serverHashes.keySet()) {
+                        retrieveFileFromServer(serverFile);
+                        clientHashes.put(serverFile, serverHashes.get(serverFile));
+                    }
+
+                    System.out.println("AFTER=============================="); //TODO debug
+                    System.out.println("Server hashes " + serverHashes); //TODO debug
+                    System.out.println("Client hashes " + clientHashes); //TODO debug
 
                     saveClientFilesInfo(clientHashes);
                 }
+
             }
         } catch (InterruptedException | ClassNotFoundException e) {
             e.printStackTrace();
