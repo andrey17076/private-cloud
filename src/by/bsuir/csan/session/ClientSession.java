@@ -15,16 +15,28 @@ public class ClientSession extends Session {
         super(client.getSocket());
         this.rootDir = client.getRootDir();
         this.overrideOption = client.hasOverrideOption();
-        this.userInfoFile = new File("users.info");
+        this.userInfoFile = new File("user.info");
         saveClientFilesInfo(new HashMap<>());
     }
 
-    public void saveClientFilesInfo(HashMap<File, String> userFilesInfo) throws IOException {
+    private void saveClientFilesInfo(HashMap<File, String> userFilesInfo) throws IOException {
         FileOutputStream fos = new FileOutputStream(userInfoFile, false);
         ObjectOutputStream out = new ObjectOutputStream(fos);
         out.writeObject(userFilesInfo);
         fos.close();
         out.close();
+    }
+
+    private HashMap<File, String> getFilesIn(File directory) {
+        HashMap<File, String> tmpFiles = new HashMap<>();
+        for (File file : directory.listFiles()) {
+            if (file.isDirectory()) {
+                tmpFiles.putAll(getFilesIn(file));
+            } else {
+                tmpFiles.put(file, HashHelper.getHash(file));
+            }
+        }
+        return tmpFiles;
     }
 
     private HashMap<File, String> getClientFilesInfo() throws IOException, ClassNotFoundException {
@@ -69,18 +81,6 @@ public class ClientSession extends Session {
 
     public String quit() throws IOException {
         return getResponse(QUIT_CMD);
-    }
-
-    public HashMap<File, String> getFilesIn(File directory) {
-        HashMap<File, String> tmpFiles = new HashMap<>();
-        for (File file : directory.listFiles()) {
-            if (file.isDirectory()) {
-                tmpFiles.putAll(getFilesIn(file));
-            } else {
-                tmpFiles.put(file, HashHelper.getHash(file));
-            }
-        }
-        return tmpFiles;
     }
 
     @Override

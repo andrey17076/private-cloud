@@ -1,13 +1,12 @@
 package by.bsuir.csan.session;
 
-import by.bsuir.csan.server.Server;
 import by.bsuir.csan.server.user.User;
+import by.bsuir.csan.server.user.UsersInfo;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.StringTokenizer;
 
 public class ServerSession extends Session {
@@ -61,11 +60,9 @@ public class ServerSession extends Session {
         String username = messageTokens.nextToken();
         String password = messageTokens.nextToken();
 
-        ArrayList<User> users = Server.getUsers();
-
         boolean isExists = false;
 
-        for (User u : users) {
+        for (User u : UsersInfo.getUsers()) {
             if (u.getLogin().equals(username)) {
                 isExists = true;
                 break;
@@ -75,7 +72,7 @@ public class ServerSession extends Session {
         if (isExists) {
             sendMessage(USER_EXISTS_MSG);
         } else {
-            Server.putUser(new User(username, password));
+            UsersInfo.addUser(new User(username, password));
             sendMessage(OK_MSG);
         }
     }
@@ -85,11 +82,9 @@ public class ServerSession extends Session {
         String username = messageTokens.nextToken();
         String password = messageTokens.nextToken();
 
-        ArrayList<User> users = Server.getUsers();
-
         boolean isSignedUp = false;
 
-        for (User u : users) {
+        for (User u : UsersInfo.getUsers()) {
             if (u.getLogin().equals(username)) {
                 if (u.getPassword().equals(password)) {
                     isSignedUp = true;
@@ -112,7 +107,7 @@ public class ServerSession extends Session {
     public void handleHASH(StringTokenizer messageTokens) throws IOException {
         if (isAuthorized()) {
             sendMessage(START_LOADING_MSG);
-            sendFilesHashes(user.getFilesHashes());
+            sendFilesHashes(UsersInfo.getUserInfo(user));
             sendMessage(OK_MSG);
         } else {
             sendMessage(NOT_AUTHORIZED_MSG);
@@ -125,18 +120,16 @@ public class ServerSession extends Session {
             sendMessage(START_LOADING_MSG);
             String filePath = messageTokens.nextToken();
             File file = receiveFile(new File(user.getUserDir().getPath() + "/" + filePath));
-            user.putFile(file);
+            UsersInfo.addFileTo(user, file);
             sendMessage(OK_MSG);
         } else {
             sendMessage(NOT_AUTHORIZED_MSG);
         }
-        Server.saveUsersInfo();
     }
 
     public void handleRETR(StringTokenizer messageTokens) throws IOException {
         if (isAuthorized()) {
-            String filePath = user.getUserDir().getPath() + "/" + messageTokens.nextToken();
-            File file = user.getFile(filePath);
+            File file = UsersInfo.getFileFrom(user, messageTokens.nextToken());
             if (file != null) {
                 sendMessage(START_LOADING_MSG);
                 sendFile(file);
@@ -147,7 +140,6 @@ public class ServerSession extends Session {
         } else {
             sendMessage(NOT_AUTHORIZED_MSG);
         }
-        Server.saveUsersInfo();
     }
 
     public void handleCHECK(StringTokenizer messageTokens) throws IOException {

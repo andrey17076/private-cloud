@@ -33,9 +33,6 @@ public abstract class Session extends Thread {
 
     protected Socket socket;
 
-    protected InputStream inStream;
-    protected OutputStream outStream;
-
     protected DataInputStream dataInputStream;
     protected DataOutputStream dataOutputStream;
 
@@ -43,10 +40,8 @@ public abstract class Session extends Thread {
 
     public Session(Socket socket) throws IOException {
         this.socket = socket;
-        this.inStream = socket.getInputStream();
-        this.outStream = socket.getOutputStream();
-        this.dataInputStream = new DataInputStream(inStream);
-        this.dataOutputStream = new DataOutputStream(outStream);
+        this.dataInputStream = new DataInputStream(socket.getInputStream());
+        this.dataOutputStream = new DataOutputStream(socket.getOutputStream());
     }
 
     protected void log(String logMessage, LogType type) {
@@ -141,8 +136,6 @@ public abstract class Session extends Thread {
         } finally {
             try {
                 socket.close();
-                inStream.close();
-                outStream.close();
                 dataInputStream.close();
                 dataOutputStream.close();
             } catch (IOException e) {
