@@ -74,6 +74,12 @@ public class UsersInfo implements Serializable {
         saveUsersInfo();
     }
 
+    public static void deleteFileFrom(User user, File file) {
+        file.delete();
+        String filePath = file.getPath().replaceFirst(user.getUserDir().getPath() + "/", "");
+        usersInfo.get(user).remove(new File(filePath));
+    }
+
     public static File getFileFrom(User user, String filePath) {
         if (usersInfo.get(user).containsKey(new File(filePath))) {
             String serverFilePath = user.getUserDir() + "/" + filePath;

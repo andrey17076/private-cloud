@@ -23,6 +23,7 @@ public abstract class Session extends Thread {
     protected static final String HASH_CMD = "HASH";
     protected static final String STORE_CMD = "STORE";
     protected static final String RETR_CMD = "RETR";
+    protected static final String DEL_CMD = "DEL";
     protected static final String CHECK_CMD = "CHECK";
     protected static final String QUIT_CMD = "QUIT";
 

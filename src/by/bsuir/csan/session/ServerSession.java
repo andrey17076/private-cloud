@@ -106,9 +106,8 @@ public class ServerSession extends Session {
 
     public void handleHASH(StringTokenizer messageTokens) throws IOException {
         if (isAuthorized()) {
-            sendMessage(START_LOADING_MSG);
-            sendFilesHashes(UsersInfo.getUserInfo(user));
             sendMessage(OK_MSG);
+            sendFilesHashes(UsersInfo.getUserInfo(user));
         } else {
             sendMessage(NOT_AUTHORIZED_MSG);
         }
@@ -131,9 +130,22 @@ public class ServerSession extends Session {
         if (isAuthorized()) {
             File file = UsersInfo.getFileFrom(user, messageTokens.nextToken());
             if (file != null) {
-                sendMessage(START_LOADING_MSG);
-                sendFile(file);
                 sendMessage(OK_MSG);
+                sendFile(file);
+            } else {
+                sendMessage(NOT_FOUND_MSG);
+            }
+        } else {
+            sendMessage(NOT_AUTHORIZED_MSG);
+        }
+    }
+
+    public void handleDEL(StringTokenizer messageTokens) throws IOException {
+        if (isAuthorized()) {
+            File file = UsersInfo.getFileFrom(user, messageTokens.nextToken());
+            if (file != null) {
+                sendMessage(OK_MSG);
+                UsersInfo.deleteFileFrom(user, file);
             } else {
                 sendMessage(NOT_FOUND_MSG);
             }
