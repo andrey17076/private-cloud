@@ -50,15 +50,15 @@ public class ServerSession extends Session {
         }
     }
 
-    public ServerSession(Socket socket) throws IOException {
-        super(socket);
+    public ServerSession(Socket socket, File logFile) throws IOException {
+        super(socket, logFile);
         log(CONNECT_MSG, LogType.FROM);
     }
 
     public void handleSIGN(StringTokenizer messageTokens) throws IOException {
 
         String username = messageTokens.nextToken();
-        String password = messageTokens.nextToken();
+        String passHash = messageTokens.nextToken();
 
         boolean isExists = false;
 
@@ -72,21 +72,23 @@ public class ServerSession extends Session {
         if (isExists) {
             sendMessage(USER_EXISTS_MSG);
         } else {
-            UsersInfo.addUser(new User(username, password));
             sendMessage(OK_MSG);
+            User user = new User(username, passHash);
+            UsersInfo.addUser(user);
+            setLogFile(UsersInfo.getUserLog(user.getLogin()));
         }
     }
 
     public void handleAUTH(StringTokenizer messageTokens) throws IOException {
 
         String username = messageTokens.nextToken();
-        String password = messageTokens.nextToken();
+        String passHash = messageTokens.nextToken();
 
         boolean isSignedUp = false;
 
         for (User u : UsersInfo.getUsers()) {
             if (u.getLogin().equals(username)) {
-                if (u.getPassword().equals(password)) {
+                if (u.getPassHash().equals(passHash)) {
                     isSignedUp = true;
                     this.user = u;
                 } else {
@@ -99,6 +101,7 @@ public class ServerSession extends Session {
 
         if (isSignedUp) {
             sendMessage(OK_MSG);
+            setLogFile(UsersInfo.getUserLog(user.getLogin()));
         } else {
             sendMessage(USER_NOT_EXISTS_MSG);
         }

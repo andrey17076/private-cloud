@@ -1,17 +1,18 @@
 package by.bsuir.csan.server.user;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 
 public class User implements Serializable {
 
     private String login;
-    private String password; //TODO replace with pass hash
+    private String passHash;
     private File userDir;
 
-    public User(String login, String password) {
+    public User(String login, String passHash) throws IOException {
         this.login = login;
-        this.password = password;
+        this.passHash = passHash;
         this.userDir = new File(UsersInfo.getUsersRootDir() + "/" + Integer.toString(login.hashCode()));
     }
 
@@ -19,12 +20,11 @@ public class User implements Serializable {
         return login;
     }
 
-    public String getPassword() {
-        return password;
+    public String getPassHash() {
+        return passHash;
     }
 
     public File getUserDir() {
         return userDir;
     }
-
 }

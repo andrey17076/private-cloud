@@ -8,13 +8,13 @@ import java.util.HashMap;
 public class ClientSession extends Session {
 
     private File rootDir;
-    private boolean overrideOptionChoosed;
+    private boolean overrideOptionChosen;
     private File userInfoFile;
 
     public ClientSession(Client client) throws IOException {
-        super(client.getSocket());
+        super(client.getSocket(), new File("user.log"));
         this.rootDir = client.getRootDir();
-        this.overrideOptionChoosed = client.hasOverrideOption();
+        this.overrideOptionChosen = client.hasOverrideOption();
         this.userInfoFile = new File("user.info");
         saveClientFilesInfo(new HashMap<>());
     }
@@ -119,7 +119,7 @@ public class ClientSession extends Session {
                                 if (sameHashesOnClientAndLastClientSync) {
                                     retrieveFileFromServer(clientFile);
                                     clientFiles.put(clientFile, serverFiles.get(clientFile));
-                                } else if (overrideOptionChoosed) {
+                                } else if (overrideOptionChosen) {
                                     storeFileOnServer(clientFile);
                                 } else {
                                     retrieveFileFromServer(clientFile);

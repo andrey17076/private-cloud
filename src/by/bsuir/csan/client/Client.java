@@ -45,9 +45,10 @@ public class Client {
 
         String username = "user";
         String password = "pass";
+        String passHash = Integer.toString(password.hashCode());
 
-        clientSession.signUp(username, password);
-        clientSession.authorize(username, password);
+        clientSession.signUp(username, passHash);
+        clientSession.authorize(username, passHash);
         clientSession.checkAuthorization();
 
 //        clientSession.quit();

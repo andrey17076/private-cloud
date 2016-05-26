@@ -2,6 +2,8 @@ package by.bsuir.csan.session;
 
 import java.io.*;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
 
 public abstract class Session extends Thread {
@@ -33,20 +35,43 @@ public abstract class Session extends Thread {
     protected byte[] buffer = new byte[BUFFER_SIZE];
 
     protected Socket socket;
+    protected FileOutputStream logFileStream;
 
     protected DataInputStream dataInputStream;
     protected DataOutputStream dataOutputStream;
 
     protected abstract void handleSession() throws IOException;
 
-    public Session(Socket socket) throws IOException {
+    public Session(Socket socket, File logFile) throws IOException {
         this.socket = socket;
         this.dataInputStream = new DataInputStream(socket.getInputStream());
         this.dataOutputStream = new DataOutputStream(socket.getOutputStream());
+        this.logFileStream = new FileOutputStream(logFile, true);
     }
 
     protected void log(String logMessage, LogType type) {
-        System.out.println(type.name() + " " + socket.getInetAddress().getHostAddress() + ": " + logMessage);
+        String timeStamp = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(Calendar.getInstance().getTime());
+        logMessage = "[" + timeStamp + "]: " +
+                type.name() + " " +
+                socket.getInetAddress().getHostAddress() + ": "
+                + logMessage + "\n";
+        try {
+            logFileStream.write(logMessage.getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected void setLogFile(File logFile) {
+
+        File parent = logFile.getParentFile();
+        parent.mkdir();
+
+        try {
+            logFileStream = new FileOutputStream(logFile, true);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     protected String receiveMessage() throws IOException {
@@ -136,9 +161,9 @@ public abstract class Session extends Thread {
             e.printStackTrace();
         } finally {
             try {
-                socket.close();
                 dataInputStream.close();
                 dataOutputStream.close();
+                socket.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }

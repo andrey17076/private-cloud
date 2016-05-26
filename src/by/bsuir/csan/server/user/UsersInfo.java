@@ -13,12 +13,14 @@ public class UsersInfo implements Serializable {
     private static final File rootDir = new File("root");
     private static final File usersInfoFile = new File(rootDir.getPath() + "/users.info");;
     private static HashMap<User, HashMap<File, String>> usersInfo = new HashMap<>();
+    private static HashMap<String, File> usersLogs = new HashMap<>();
 
     private static void saveUsersInfo() {
         try {
             FileOutputStream fos = new FileOutputStream(usersInfoFile);
             ObjectOutputStream out = new ObjectOutputStream(fos);
             out.writeObject(usersInfo);
+            out.writeObject(usersLogs);
             fos.close();
             out.close();
         } catch (IOException e) {
@@ -32,6 +34,10 @@ public class UsersInfo implements Serializable {
 
     public static Set<User> getUsers() {
         return usersInfo.keySet();
+    }
+
+    public static File getUserLog(String login) {
+        return usersLogs.get(login);
     }
 
     public static File getUsersRootDir() {
@@ -50,6 +56,7 @@ public class UsersInfo implements Serializable {
             FileInputStream fin = new FileInputStream(usersInfoFile);
             ObjectInputStream oin = new ObjectInputStream(fin);
             usersInfo = (HashMap<User, HashMap<File, String>>) oin.readObject();
+            usersLogs = (HashMap<String, File>) oin.readObject();
             oin.close();
             fin.close();
         } catch (IOException | ClassNotFoundException e) {
@@ -63,6 +70,8 @@ public class UsersInfo implements Serializable {
         File userDir = user.getUserDir();
         if (!userDir.exists()) {
             userDir.mkdir();
+            File userLog = new File(userDir + "/" + user.getLogin() + ".log");
+            usersLogs.put(user.getLogin(), userLog);
         }
         saveUsersInfo();
     }
