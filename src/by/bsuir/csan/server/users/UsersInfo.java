@@ -1,4 +1,4 @@
-package by.bsuir.csan.server.user;
+package by.bsuir.csan.server.users;
 
 import by.bsuir.csan.helpers.HashHelper;
 

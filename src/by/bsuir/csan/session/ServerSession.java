@@ -1,7 +1,7 @@
 package by.bsuir.csan.session;
 
-import by.bsuir.csan.server.user.User;
-import by.bsuir.csan.server.user.UsersInfo;
+import by.bsuir.csan.server.users.User;
+import by.bsuir.csan.server.users.UsersInfo;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;

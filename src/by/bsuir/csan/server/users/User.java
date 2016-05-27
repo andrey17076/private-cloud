@@ -1,4 +1,4 @@
-package by.bsuir.csan.server.user;
+package by.bsuir.csan.server.users;
 
 import java.io.File;
 import java.io.IOException;

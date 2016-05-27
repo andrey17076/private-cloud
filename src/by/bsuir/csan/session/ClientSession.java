@@ -14,8 +14,8 @@ public class ClientSession extends Session {
     public ClientSession(Client client) throws IOException {
         super(client.getSocket(), new File("user.log"));
         this.rootDir = client.getRootDir();
-        this.overrideOptionChosen = client.hasOverrideOption();
         this.userInfoFile = new File("user.info");
+        this.overrideOptionChosen = client.getOverrideOption();
         saveClientFilesInfo(new HashMap<>());
     }
 
@@ -48,12 +48,16 @@ public class ClientSession extends Session {
         return oldClientsFiles;
     }
 
-    public String signUp(String username, String password) throws IOException {
-        return getResponse(SIGN_CMD + " " + username + " " + password);
+    protected void setOverrideOption(boolean option) {
+        overrideOptionChosen = option;
     }
 
-    public String authorize(String username, String password) throws IOException {
-        return getResponse(AUTH_CMD + " " + username + " " + password);
+    public String signUp(String username, String passHash) throws IOException {
+        return getResponse(SIGN_CMD + " " + username + " " + passHash);
+    }
+
+    public String authorize(String username, String passHash) throws IOException {
+        return getResponse(AUTH_CMD + " " + username + " " + passHash);
     }
 
     public String checkAuthorization() throws IOException {
