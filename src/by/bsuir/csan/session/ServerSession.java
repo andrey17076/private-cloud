@@ -15,6 +15,11 @@ public class ServerSession extends Session {
 
     private User user = null;
 
+    public ServerSession(Socket socket, File logFile) throws IOException {
+        super(socket, logFile);
+        log(CONNECT_MSG, LogType.FROM);
+    }
+
     private boolean isAuthorized() throws IOException {
 
         if (user == null) {
@@ -48,11 +53,6 @@ public class ServerSession extends Session {
         } catch (IOException e) { //in case when socket was closed
             log(DISCONNECT_MSG, LogType.FROM);
         }
-    }
-
-    public ServerSession(Socket socket, File logFile) throws IOException {
-        super(socket, logFile);
-        log(CONNECT_MSG, LogType.FROM);
     }
 
     public void handleSIGN(StringTokenizer messageTokens) throws IOException {

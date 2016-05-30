@@ -2,6 +2,7 @@ package by.bsuir.csan.server;
 
 import by.bsuir.csan.server.users.User;
 import by.bsuir.csan.server.users.UsersInfo;
+import by.bsuir.csan.session.ServerSettings;
 import by.bsuir.csan.session.ServerSession;
 
 import java.io.*;
@@ -25,7 +26,6 @@ public class Server extends Thread {
     private static final String QUIT_CMD = "QUIT";
 
     private static final File serverLog = new File("server.log");
-    private static final int serverPort = 8888;
     private static final int BUFFER_SIZE = 256;
 
     private ServerSocket serverSocket;
@@ -33,9 +33,9 @@ public class Server extends Thread {
     private ArrayList<Socket> clientSockets = new ArrayList<>();
     private Thread listenerThread;
 
-    private Server(int serverPort) {
+    private Server() {
         try {
-            this.serverSocket = new ServerSocket(serverPort);
+            this.serverSocket = new ServerSocket(ServerSettings.getServerPort());
         } catch (IOException e) {
             System.out.println(START_ERR_MSG);
         }
@@ -139,7 +139,7 @@ public class Server extends Thread {
     }
 
     public static void main(String[] args) {
-        Server server = new Server(serverPort);
+        Server server = new Server();
         server.runServer();
     }
 
