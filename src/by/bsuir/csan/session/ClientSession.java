@@ -7,23 +7,13 @@ import java.util.HashMap;
 
 public class ClientSession extends Session {
 
-    private static Socket socket;
-
-    static {
-        try {
-            socket = new Socket(ServerSettings.getServerIP(), ServerSettings.getServerPort());
-            socket.setSoTimeout(15);
-        } catch (IOException e) {
-            //null instead of ClientSession object
-        }
-    }
-
     private File userFilesInfoFile = new File("user_files.info");
     private ClientSettings clientSettings;
     private boolean isConnected = true;
 
     public ClientSession() throws IOException {
-        super(socket, new File("client.log"));
+        super(new Socket(ServerSettings.getServerIP(), ServerSettings.getServerPort()), new File("client.log"));
+        clientSettings = new ClientSettings(); //default settings
         saveClientFilesInfo(new HashMap<>()); //TODO probably something wrong here
     }
 
@@ -53,6 +43,8 @@ public class ClientSession extends Session {
                 userFiles.put(file, HashHelper.getHash(file));
             }
         }
+
+        userFiles.remove(new File(".DS_Store"));
         return userFiles;
     }
 
@@ -110,7 +102,6 @@ public class ClientSession extends Session {
             while (isConnected) {
                 Thread.sleep(10 * 1000);
                 if (clientSettings.getSyncingOption()) {
-
                     String response = getResponse(HASH_CMD);
                     if (response.equals(OK_MSG)) {
 
@@ -120,10 +111,10 @@ public class ClientSession extends Session {
                         HashMap<File, String> clientFilesToDelete = new HashMap<>();
 
                         System.out.println("BEFORE============================="); //TODO debug
-                        System.out.println("Server hashes " + serverFiles); //TODO debug
-                        System.out.println("ClientSettings hashes " + clientFiles); //TODO debug
-                        System.out.println("Old    hashes " + oldFiles); //TODO debug
-                        System.out.println("==================================="); //TODO debug
+                        System.out.println("Server hashes " + serverFiles);
+                        System.out.println("Client hashes " + clientFiles);
+                        System.out.println("Old    hashes " + oldFiles);
+                        System.out.println("===================================");
 
                         for (File clientFile : clientFiles.keySet()) {
 
@@ -174,7 +165,7 @@ public class ClientSession extends Session {
 
                         System.out.println("AFTER=============================="); //TODO debug
                         System.out.println("Server hashes " + serverFiles); //TODO debug
-                        System.out.println("ClientSettings hashes " + clientFiles); //TODO debug
+                        System.out.println("Client hashes " + clientFiles); //TODO debug
 
                         saveClientFilesInfo(clientFiles);
                     }

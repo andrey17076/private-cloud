@@ -120,7 +120,7 @@ public abstract class Session extends Thread {
 
         while (dataInputStream.available() == 0);
 
-        file.getParentFile().mkdir();
+        file.getParentFile().mkdirs();
         file.createNewFile();
 
         FileOutputStream fos = new FileOutputStream(file, false);

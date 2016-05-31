@@ -96,13 +96,6 @@ public class Client extends Application {
         primaryStage.setMaxHeight(250);
         primaryStage.setTitle("Private Cloud");
         primaryStage.setScene(mainScene);
-        primaryStage.setOnCloseRequest(event -> {
-            try {
-                clientSession.quit();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
         primaryStage.show();
 
         /**
@@ -115,6 +108,14 @@ public class Client extends Application {
             AlertBox.display("Can't connect to server!");
             primaryStage.close();
         }
+
+        primaryStage.setOnCloseRequest(event -> {
+            try {
+                clientSession.quit();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
 
         //Syncing Settings Titled VBox
         TitledVBox syncSettingsVBox = new TitledVBox("Sharing Settings");
@@ -166,6 +167,7 @@ public class Client extends Application {
                         String response = clientSession.authorize(clientSettings);
                         if (response.equals("OK")) {
                             loginLabel.setText("Login: " + login);
+                            clientSession.start();
                             syncSettingsVBox.setDisable(false);
                             AlertBox.display("Singed in");
                         } else {
@@ -220,7 +222,7 @@ public class Client extends Application {
             if (clientSettings.getLogin() != null) {
 
                 String response = clientSession.authorize(clientSettings);
-
+                clientSession.start();
                 if (response.equals("OK")) {
                     loginLabel.setText("Login: " + clientSettings.getLogin());
                     logButton.setState(true);

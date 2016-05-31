@@ -78,7 +78,7 @@ public class UsersInfo implements Serializable {
 
     public static void addFileTo(User user, File file) {
         String hash = HashHelper.getHash(file);
-        String filePath = file.getPath().replaceFirst(user.getUserDir().getPath() + "/", "");
+        String filePath = file.getPath().replaceFirst(user.getUserDir().getPath(), ""); //TODO removed slash
         usersInfo.get(user).put(new File(filePath), hash);
         saveUsersInfo();
     }

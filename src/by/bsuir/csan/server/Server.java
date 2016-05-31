@@ -89,9 +89,19 @@ public class Server extends Thread {
         listenerThread = new Thread(this);
         listenerThread.start();
 
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in)); //TODO debug
+
         while (isActive) {
             System.out.print(">");
-            StringTokenizer tokenizer = new StringTokenizer(System.console().readLine());
+//            StringTokenizer tokenizer = new StringTokenizer(System.console().readLine());
+
+            StringTokenizer tokenizer = null;
+            try {
+                tokenizer = new StringTokenizer(br.readLine());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
             String command = tokenizer.nextToken();
 
             if (command.equals(SHOW_CMD)) {
