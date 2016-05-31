@@ -13,7 +13,7 @@ public abstract class Session extends Thread {
     protected static final String OK_MSG = "OK";
     protected static final String NOT_AUTHORIZED_MSG = "YOU ARE NOT AUTHORIZED";
     protected static final String USER_EXISTS_MSG = "USER WITH THIS LOGIN IS ALREADY EXISTS";
-    protected static final String USER_NOT_EXISTS_MSG = "WRONG LOGIN";
+    protected static final String USER_NOT_EXISTS_MSG = "USER WITH THIS LOGIN IS NOT EXISTS";
     protected static final String WRONG_PASSWORD_MSG = "WRONG PASSWORD";
     protected static final String COMMAND_MISSING_MSG = "INCORRECT COMMAND";
     protected static final String UNKNOWN_MESSAGE_MSG = "UNKNOWN MESSAGE";
@@ -50,7 +50,7 @@ public abstract class Session extends Thread {
     }
 
     protected void log(String logMessage, LogType type) {
-        String timeStamp = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(Calendar.getInstance().getTime());
+        String timeStamp = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime());
         logMessage = "[" + timeStamp + "]: " +
                 type.name() + " " +
                 socket.getInetAddress().getHostAddress() + ": "
