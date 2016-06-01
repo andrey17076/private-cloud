@@ -75,7 +75,6 @@ public class ServerSession extends Session {
             sendMessage(OK_MSG);
             User user = new User(username, passHash);
             UsersInfo.addUser(user);
-            setLogFile(UsersInfo.getUserLog(user.getLogin()));
         }
     }
 
@@ -101,7 +100,6 @@ public class ServerSession extends Session {
 
         if (isSignedUp) {
             sendMessage(OK_MSG);
-            setLogFile(UsersInfo.getUserLog(user.getLogin()));
         } else {
             sendMessage(USER_NOT_EXISTS_MSG);
         }

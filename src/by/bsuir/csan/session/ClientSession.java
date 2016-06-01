@@ -40,7 +40,10 @@ public class ClientSession extends Session {
             if (file.isDirectory()) {
                 userFiles.putAll(getFilesIn(file));
             } else {
-                userFiles.put(file, HashHelper.getHash(file));
+
+                String simplePath = file.getPath().replaceFirst(clientSettings.getRootDir().getPath() + "/", "");
+
+                userFiles.put(new File(simplePath), HashHelper.getHash(file));
             }
         }
 
@@ -48,6 +51,33 @@ public class ClientSession extends Session {
         return userFiles;
     }
 
+
+    private String storeFileOnServer(File file) throws IOException {
+
+        String fullPath = clientSettings.getRootDir().getPath() + "/" + file.getPath();
+
+        String response = getResponse(STORE_CMD + " " + file.getPath());
+        if (response.equals(START_LOADING_MSG)) {
+            sendFile(new File(fullPath));
+            return receiveMessage();
+        }
+        return response;
+    }
+
+    private String retrieveFileFromServer(File file) throws IOException {
+
+        String fullPath = clientSettings.getRootDir().getPath() + "/" + file.getPath();
+
+        String response = getResponse(RETR_CMD + " " + file.getPath());
+        if (response.equals(OK_MSG)) {
+            receiveFile(new File(fullPath));
+        }
+        return response;
+    }
+
+    private String deleteFileOnServer(File file) throws IOException {
+        return getResponse(DEL_CMD + " " + file.getPath());
+    }
 
     public void setClientSettings(ClientSettings clientSettings) {
         this.clientSettings = clientSettings;
@@ -67,28 +97,6 @@ public class ClientSession extends Session {
 
     public String checkAutorization() throws IOException {
         return getResponse(CHECK_CMD);
-    }
-
-    public String storeFileOnServer(File file) throws IOException {
-
-        String response = getResponse(STORE_CMD + " " + file.getPath());
-        if (response.equals(START_LOADING_MSG)) {
-            sendFile(file);
-            return receiveMessage();
-        }
-        return response;
-    }
-
-    public String retrieveFileFromServer(File file) throws IOException {
-        String response = getResponse(RETR_CMD + " " + file.getPath());
-        if (response.equals(OK_MSG)) {
-            receiveFile(file);
-        }
-        return response;
-    }
-
-    public String deleteFileOnServer(File file) throws IOException {
-        return getResponse(DEL_CMD + " " + file.getPath());
     }
 
     public String quit() throws IOException {
@@ -172,6 +180,7 @@ public class ClientSession extends Session {
 
                 }
             }
+
         } catch (InterruptedException | ClassNotFoundException e) {
             e.printStackTrace();
         }

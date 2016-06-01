@@ -6,50 +6,48 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
 
-public abstract class Session extends Thread {
+abstract class Session extends Thread {
 
-    protected static final String CONNECT_MSG = "CONNECTED";
-    protected static final String DISCONNECT_MSG = "DISCONNECTED";
-    protected static final String OK_MSG = "OK";
-    protected static final String NOT_AUTHORIZED_MSG = "YOU ARE NOT AUTHORIZED";
-    protected static final String USER_EXISTS_MSG = "USER WITH THIS LOGIN IS ALREADY EXISTS";
-    protected static final String USER_NOT_EXISTS_MSG = "USER WITH THIS LOGIN IS NOT EXISTS";
-    protected static final String WRONG_PASSWORD_MSG = "WRONG PASSWORD";
-    protected static final String COMMAND_MISSING_MSG = "INCORRECT COMMAND";
-    protected static final String UNKNOWN_MESSAGE_MSG = "UNKNOWN MESSAGE";
-    protected static final String NOT_FOUND_MSG = "NOT FOUND";
-    protected static final String START_LOADING_MSG = "LOADING STARTS";
+    private static final int BUFFER_SIZE = 1024;
 
-    protected static final String SIGN_CMD = "SIGN";
-    protected static final String AUTH_CMD = "AUTH";
-    protected static final String HASH_CMD = "HASH";
-    protected static final String STORE_CMD = "STORE";
-    protected static final String RETR_CMD = "RETR";
-    protected static final String DEL_CMD = "DEL";
-    protected static final String CHECK_CMD = "CHECK";
-    protected static final String QUIT_CMD = "QUIT";
+    static final String CONNECT_MSG = "CONNECTED";
+    static final String DISCONNECT_MSG = "DISCONNECTED";
+    static final String OK_MSG = "OK";
+    static final String NOT_AUTHORIZED_MSG = "YOU ARE NOT AUTHORIZED";
+    static final String USER_EXISTS_MSG = "USER WITH THIS LOGIN IS ALREADY EXISTS";
+    static final String USER_NOT_EXISTS_MSG = "USER WITH THIS LOGIN IS NOT EXISTS";
+    static final String WRONG_PASSWORD_MSG = "WRONG PASSWORD";
+    static final String COMMAND_MISSING_MSG = "INCORRECT COMMAND";
+    static final String NOT_FOUND_MSG = "NOT FOUND";
+    static final String START_LOADING_MSG = "LOADING STARTS";
 
+    static final String SIGN_CMD = "SIGN";
+    static final String AUTH_CMD = "AUTH";
+    static final String HASH_CMD = "HASH";
+    static final String STORE_CMD = "STORE";
+    static final String RETR_CMD = "RETR";
+    static final String DEL_CMD = "DEL";
+    static final String CHECK_CMD = "CHECK";
+    static final String QUIT_CMD = "QUIT";
 
-    protected static final int BUFFER_SIZE = 1024;
-    protected enum LogType {TO, FROM}
-    protected byte[] buffer = new byte[BUFFER_SIZE];
+    private byte[] buffer = new byte[BUFFER_SIZE];
+    private FileOutputStream logFileStream;
+    private DataInputStream dataInputStream;
+    private DataOutputStream dataOutputStream;
 
-    protected Socket socket;
-    protected FileOutputStream logFileStream;
-
-    protected DataInputStream dataInputStream;
-    protected DataOutputStream dataOutputStream;
+    Socket socket;
+    enum LogType {TO, FROM}
 
     protected abstract void handleSession() throws IOException;
 
-    public Session(Socket socket, File logFile) throws IOException {
+    Session(Socket socket, File logFile) throws IOException {
         this.socket = socket;
         this.dataInputStream = new DataInputStream(socket.getInputStream());
         this.dataOutputStream = new DataOutputStream(socket.getOutputStream());
         this.logFileStream = new FileOutputStream(logFile, true);
     }
 
-    protected void log(String logMessage, LogType type) {
+    void log(String logMessage, LogType type) {
         String timeStamp = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime());
         logMessage = "[" + timeStamp + "]: " +
                 type.name() + " " +
@@ -62,49 +60,32 @@ public abstract class Session extends Thread {
         }
     }
 
-    protected void setLogFile(File logFile) {
+    String receiveMessage() throws IOException {
 
-        File parent = logFile.getParentFile();
-        parent.mkdir();
+        while (dataInputStream.available() == 0) ;
 
-        try {
-            logFileStream = new FileOutputStream(logFile, true);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
-
-    protected String receiveMessage() throws IOException {
-
-        while (dataInputStream.available() == 0);
-
-        String textMessage;
         int messageLength = dataInputStream.readInt();
-        if (messageLength > 0) {
-            byte[] message = new byte[messageLength];
-            dataInputStream.readFully(message, 0, messageLength);
-            textMessage = new String(message);
-        } else {
-            textMessage = UNKNOWN_MESSAGE_MSG;
-        }
+        byte[] message = new byte[messageLength];
+        dataInputStream.readFully(message, 0, messageLength);
+        String textMessage = new String(message);
 
         log(textMessage, LogType.FROM);
         return textMessage;
     }
 
-    protected void sendMessage(String message) throws IOException {
+    void sendMessage(String message) throws IOException {
         dataOutputStream.writeInt(message.length());
         dataOutputStream.write(message.getBytes());
         dataOutputStream.flush();
         log(message, LogType.TO);
     }
 
-    protected String getResponse(String request) throws IOException {
+    String getResponse(String request) throws IOException {
         sendMessage(request);
         return receiveMessage();
     }
 
-    protected void sendFile(File file) throws IOException {
+    void sendFile(File file) throws IOException {
         FileInputStream fin = new FileInputStream(file);
 
         int length;
@@ -116,7 +97,7 @@ public abstract class Session extends Thread {
         fin.close();
     }
 
-    protected File receiveFile(File file) throws IOException {
+    File receiveFile(File file) throws IOException {
 
         while (dataInputStream.available() == 0);
 
@@ -135,7 +116,7 @@ public abstract class Session extends Thread {
         return file;
     }
 
-    protected void sendFilesHashes(HashMap<File, String> filesHashes) throws IOException {
+    void sendFilesHashes(HashMap<File, String> filesHashes) throws IOException {
 
         ObjectOutputStream oos = new ObjectOutputStream(dataOutputStream);
         oos.writeObject(filesHashes);
@@ -143,14 +124,13 @@ public abstract class Session extends Thread {
 
     }
 
-    protected HashMap<File, String> receiveFilesHashes() throws IOException, ClassNotFoundException {
+    HashMap<File, String> receiveFilesHashes() throws IOException, ClassNotFoundException {
 
         while (dataInputStream.available() == 0);
 
         ObjectInputStream ois = new ObjectInputStream(dataInputStream);
-        HashMap<File, String> filesHashes = (HashMap<File, String>) ois.readObject();
 
-        return filesHashes;
+        return (HashMap<File, String>) ois.readObject();
     }
 
     @Override

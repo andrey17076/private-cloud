@@ -1,6 +1,5 @@
 package by.bsuir.csan.server;
 
-import by.bsuir.csan.server.users.User;
 import by.bsuir.csan.server.users.UsersInfo;
 import by.bsuir.csan.session.ServerSettings;
 import by.bsuir.csan.session.ServerSession;
@@ -18,11 +17,9 @@ public class Server extends Thread {
     private static final String FINISH_ERR_MSG = "CAN'T STOP SERVER";
     private static final String SHOW_ERR_MSG = "CAN'T SHOW LOG";
     private static final String STOP_SESSION_ERR_MSG = "CAN'T STOP SERVER SESSION";
-    private static final String NOT_FOUND_LOG_MSG = "CAN'T FIND LOG";
     private static final String WRONG_COMMAND_MSG = "WRONG COMMAND";
 
-    private static final String LOGS_CMD = "LOGS";
-    private static final String SHOW_CMD = "SHOW";
+    private static final String LOG_CMD = "LOG";
     private static final String QUIT_CMD = "QUIT";
 
     private static final File serverLog = new File("server.log");
@@ -41,14 +38,9 @@ public class Server extends Thread {
         }
     }
 
-    private void printLog(File logFile){
-        if (logFile == null) {
-            System.out.println(NOT_FOUND_LOG_MSG);
-            return;
-        }
-
+    private void printLog(){
         try {
-            FileInputStream fis = new FileInputStream(logFile);
+            FileInputStream fis = new FileInputStream(serverLog);
             int length;
             byte[] buffer = new byte[BUFFER_SIZE];
             while ((length = fis.read(buffer)) > 0) {
@@ -59,55 +51,19 @@ public class Server extends Thread {
         }
     }
 
-    private void showLog(StringTokenizer tokenizer) {
-        String logKey = "";
-
-        try {
-            logKey = tokenizer.nextToken();
-        } catch (NoSuchElementException e) {
-            //Command with no logKey
-        }
-
-        if (logKey.equals(serverLog.getPath())) {
-            printLog(serverLog);
-        } else {
-            printLog(UsersInfo.getUserLog(logKey));
-        }
-    }
-
-    private void showAvailableLogs() {
-        System.out.println(serverLog.getPath());
-        Set<User> users = UsersInfo.getUsers();
-        for (User user : users) {
-            System.out.println(user.getLogin());
-        }
-    }
-
     private void runServer() {
         System.out.println(START_MSG);
         UsersInfo.loadUsersInfo();
         listenerThread = new Thread(this);
         listenerThread.start();
 
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in)); //TODO debug
-
         while (isActive) {
             System.out.print(">");
-//            StringTokenizer tokenizer = new StringTokenizer(System.console().readLine());
-
-            StringTokenizer tokenizer = null;
-            try {
-                tokenizer = new StringTokenizer(br.readLine());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
+            StringTokenizer tokenizer = new StringTokenizer(System.console().readLine());
             String command = tokenizer.nextToken();
 
-            if (command.equals(SHOW_CMD)) {
-                showLog(tokenizer);
-            } else if (command.equals(LOGS_CMD)) {
-                showAvailableLogs();
+            if (command.equals(LOG_CMD)) {
+                printLog();
             } else if (command.equals(QUIT_CMD)) {
                 stopServer();
             } else {
