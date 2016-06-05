@@ -108,7 +108,7 @@ public class ClientSession extends Session {
     protected void handleSession() throws IOException {
         try {
             while (isConnected) {
-                Thread.sleep(10 * 1000);
+                Thread.sleep(30 * 1000);
                 if (clientSettings.getSyncingOption()) {
                     String response = getResponse(HASH_CMD);
                     if (response.equals(OK_MSG)) {
@@ -154,8 +154,8 @@ public class ClientSession extends Session {
                         }
 
                         System.out.println("PRE================================"); //TODO debug
-                        System.out.println("Server hashes " + serverFiles); //TODO debug
-                        System.out.println("Delete hashes " + clientFilesToDelete); //TODO debug
+                        System.out.println("Rest of   Server hashes " + serverFiles);
+                        System.out.println("To del on client hashes " + clientFilesToDelete);
 
                         for (File serverFile : serverFiles.keySet()) { //On the server; Don't on the client side
                             if (oldFiles.containsKey(serverFile)) {
@@ -168,12 +168,12 @@ public class ClientSession extends Session {
 
                         clientFilesToDelete.keySet().forEach((file) -> {
                             clientFiles.remove(file);
-                            file.delete();
+                            new File(clientSettings.getRootDir() + "/" + file.getPath()).delete();
                         });
 
                         System.out.println("AFTER=============================="); //TODO debug
-                        System.out.println("Server hashes " + serverFiles); //TODO debug
-                        System.out.println("Client hashes " + clientFiles); //TODO debug
+                        System.out.println("Server hashes " + serverFiles);
+                        System.out.println("Client hashes " + clientFiles);
 
                         saveClientFilesInfo(clientFiles);
                     }

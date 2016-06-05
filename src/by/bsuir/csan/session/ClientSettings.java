@@ -9,7 +9,7 @@ public class ClientSettings implements Serializable {
 
     private String login;
     private String passHash;
-    private boolean overrideOption = false;
+    private boolean overrideOption = true;
     private boolean syncingOption = false;
 
     public ClientSettings() throws IOException {

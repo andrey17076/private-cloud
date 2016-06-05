@@ -15,11 +15,11 @@ abstract class Session extends Thread {
     static final String OK_MSG = "OK";
     static final String NOT_AUTHORIZED_MSG = "YOU ARE NOT AUTHORIZED";
     static final String USER_EXISTS_MSG = "USER WITH THIS LOGIN IS ALREADY EXISTS";
-    static final String USER_NOT_EXISTS_MSG = "USER WITH THIS LOGIN IS NOT EXISTS";
+    static final String USER_NOT_EXIST_MSG = "USER WITH THIS LOGIN IS NOT EXIST";
     static final String WRONG_PASSWORD_MSG = "WRONG PASSWORD";
     static final String COMMAND_MISSING_MSG = "INCORRECT COMMAND";
     static final String NOT_FOUND_MSG = "NOT FOUND";
-    static final String START_LOADING_MSG = "LOADING STARTS";
+    static final String START_LOADING_MSG = "LOADING STARTED";
 
     static final String SIGN_CMD = "SIGN";
     static final String AUTH_CMD = "AUTH";
@@ -45,6 +45,17 @@ abstract class Session extends Thread {
         this.dataInputStream = new DataInputStream(socket.getInputStream());
         this.dataOutputStream = new DataOutputStream(socket.getOutputStream());
         this.logFileStream = new FileOutputStream(logFile, true);
+    }
+
+    public void closeSession() {
+        try {
+            this.interrupt();
+            dataInputStream.close();
+            dataOutputStream.close();
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     void log(String logMessage, LogType type) {
@@ -140,13 +151,7 @@ abstract class Session extends Thread {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            try {
-                dataInputStream.close();
-                dataOutputStream.close();
-                socket.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            closeSession();
         }
     }
 }

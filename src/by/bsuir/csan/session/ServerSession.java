@@ -13,10 +13,11 @@ public class ServerSession extends Session {
 
     private final static String HANDLER_HEAD = "handle";
 
-    private User user = null;
+    private User user;
 
-    public ServerSession(Socket socket, File logFile) throws IOException {
-        super(socket, logFile);
+    public ServerSession(Socket clientSocket, File logFile) throws IOException {
+        super(clientSocket, logFile);
+        new Thread(this).start(); //start handling this session: receiving messages from client
         log(CONNECT_MSG, LogType.FROM);
     }
 
@@ -101,7 +102,7 @@ public class ServerSession extends Session {
         if (isSignedUp) {
             sendMessage(OK_MSG);
         } else {
-            sendMessage(USER_NOT_EXISTS_MSG);
+            sendMessage(USER_NOT_EXIST_MSG);
         }
     }
 
@@ -158,6 +159,8 @@ public class ServerSession extends Session {
     public void handleCHECK(StringTokenizer messageTokens) throws IOException {
         if (isAuthorized()) {
             sendMessage(OK_MSG);
+        } else {
+            sendMessage(NOT_AUTHORIZED_MSG);
         }
     }
 

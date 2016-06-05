@@ -126,7 +126,7 @@ public class Client extends Application {
         HBox.setHgrow(syncDirPathTextField, Priority.ALWAYS);
 
         Button syncDirChooseButton = new Button("Choose");
-        syncDirChooseButton.setOnAction(e-> syncDirPathTextField.setText(chooseShareableFolder(primaryStage)));
+        syncDirChooseButton.setOnAction(event -> syncDirPathTextField.setText(chooseShareableFolder(primaryStage)));
 
         syncingButton.setOnActivation(event -> handleSyncingButton());
 
