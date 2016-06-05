@@ -25,7 +25,6 @@ public class Server extends Thread {
     private ServerSocket             serverSocket;
     private boolean                  serverInActiveState;
     private ArrayList<ServerSession> serverSessions;
-    private Thread                   listenerThread;
 
     private Server() throws IOException {
         this.serverSocket = new ServerSocket(ServerSettings.getServerPort());
@@ -68,7 +67,7 @@ public class Server extends Thread {
     private void runServer() {
         System.out.println(START_MSG);
         UsersInfo.loadUsersInfo();
-        listenerThread = new Thread(this);
+        Thread listenerThread = new Thread(this);
         listenerThread.start();
         performDialog();
     }

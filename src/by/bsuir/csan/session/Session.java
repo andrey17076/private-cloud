@@ -10,49 +10,51 @@ abstract class Session extends Thread {
 
     private static final int BUFFER_SIZE = 1024;
 
-    static final String CONNECT_MSG = "CONNECTED";
-    static final String DISCONNECT_MSG = "DISCONNECTED";
-    static final String OK_MSG = "OK";
-    static final String NOT_AUTHORIZED_MSG = "YOU ARE NOT AUTHORIZED";
-    static final String USER_EXISTS_MSG = "USER WITH THIS LOGIN IS ALREADY EXISTS";
-    static final String USER_NOT_EXIST_MSG = "USER WITH THIS LOGIN IS NOT EXIST";
-    static final String WRONG_PASSWORD_MSG = "WRONG PASSWORD";
-    static final String COMMAND_MISSING_MSG = "INCORRECT COMMAND";
-    static final String NOT_FOUND_MSG = "NOT FOUND";
-    static final String START_LOADING_MSG = "LOADING STARTED";
+    static final String      CONNECT_MSG = "CONNECTED";
+    static final String      DISCONNECT_MSG = "DISCONNECTED";
+    static final String      OK_MSG = "OK";
+    static final String      NOT_AUTHORIZED_MSG = "YOU ARE NOT AUTHORIZED";
+    static final String      USER_EXISTS_MSG = "USER WITH THIS LOGIN IS ALREADY EXISTS";
+    static final String      USER_NOT_EXIST_MSG = "USER WITH THIS LOGIN AND PASSWORD IS NOT EXIST";
+    static final String      COMMAND_MISSING_MSG = "INCORRECT COMMAND";
+    static final String      NOT_FOUND_MSG = "NOT FOUND";
+    static final String      START_LOADING_MSG = "LOADING STARTED";
 
-    static final String SIGN_CMD = "SIGN";
-    static final String AUTH_CMD = "AUTH";
-    static final String HASH_CMD = "HASH";
-    static final String STORE_CMD = "STORE";
-    static final String RETR_CMD = "RETR";
-    static final String DEL_CMD = "DEL";
-    static final String CHECK_CMD = "CHECK";
-    static final String QUIT_CMD = "QUIT";
+    static final String      SIGN_CMD = "SIGN";
+    static final String      AUTH_CMD = "AUTH";
+    static final String      HASH_CMD = "HASH";
+    static final String      STORE_CMD = "STORE";
+    static final String      RETR_CMD = "RETR";
+    static final String      DEL_CMD = "DEL";
+    static final String      CHECK_CMD = "CHECK";
+    static final String      QUIT_CMD = "QUIT";
 
-    private byte[] buffer = new byte[BUFFER_SIZE];
+    private byte[]           buffer = new byte[BUFFER_SIZE];
     private FileOutputStream logFileStream;
-    private DataInputStream dataInputStream;
+    private DataInputStream  dataInputStream;
     private DataOutputStream dataOutputStream;
 
-    Socket socket;
-    enum LogType {TO, FROM}
+    private Socket           socket;
+    private boolean          sessionInActiveState;
+    enum LogType             {TO, FROM}
 
-    protected abstract void handleSession() throws IOException;
+    protected abstract void handleSessionPermanently() throws IOException;
 
     Session(Socket socket, File logFile) throws IOException {
         this.socket = socket;
         this.dataInputStream = new DataInputStream(socket.getInputStream());
         this.dataOutputStream = new DataOutputStream(socket.getOutputStream());
         this.logFileStream = new FileOutputStream(logFile, true);
+        this.sessionInActiveState = true;
     }
 
     public void closeSession() {
         try {
-            this.interrupt();
             dataInputStream.close();
             dataOutputStream.close();
             socket.close();
+            sessionInActiveState = false;
+            log(DISCONNECT_MSG, LogType.FROM);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -147,9 +149,11 @@ abstract class Session extends Thread {
     @Override
     public void run() {
         try {
-            handleSession();
+            while (sessionInActiveState) {
+                handleSessionPermanently();
+            }
         } catch (IOException e) {
-            e.printStackTrace();
+            //just socket input or/and output was closed
         } finally {
             closeSession();
         }

@@ -8,10 +8,10 @@ import java.util.Set;
 
 public class UsersInfo implements Serializable {
 
-    private static final String ROOT_DIR_CREATED_MSG = "USERS INFO DIR CREATED";
+    private static final String                         ROOT_DIR_CREATED_MSG = "USERS INFO DIR CREATED";
 
-    private static final File rootDir = new File("root");
-    private static final File usersInfoFile = new File(rootDir.getPath() + "/users.info");;
+    private static final File                           rootDir = new File("root");
+    private static final File                           usersInfoFile = new File(rootDir.getPath() + "/users.info");
     private static HashMap<User, HashMap<File, String>> usersInfo = new HashMap<>();
 
     private static void saveUsersInfo() {
@@ -85,6 +85,28 @@ public class UsersInfo implements Serializable {
         if (usersInfo.get(user).containsKey(new File(filePath))) {
             String serverFilePath = user.getUserDir() + "/" + filePath;
             return new File(serverFilePath);
+        }
+        return null;
+    }
+
+    public static boolean isUserExists(String login) {
+        boolean isExists = false;
+        for (User u : usersInfo.keySet()) {
+            if (u.getLogin().equals(login)) {
+                isExists = true;
+                break;
+            }
+        }
+        return isExists;
+    }
+
+    public static User getUser(String login, String passHash) {
+        for (User user : usersInfo.keySet()) {
+            if (user.getLogin().equals(login)) {
+                if (user.getPassHash().equals(passHash)) {
+                    return user;
+                }
+            }
         }
         return null;
     }
