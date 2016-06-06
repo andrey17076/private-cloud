@@ -1,16 +1,16 @@
-package by.bsuir.csan.session;
+package by.bsuir.csan.client;
 
 import java.io.*;
 
 public class ClientSettings implements Serializable {
 
-    private static File rootDir = new File(System.getProperty("user.home") + "/PrivateCloud");
     private static final File clientSettingsFile = new File("settings.conf");
+    private static File       rootDir = new File(System.getProperty("user.home") + "/PrivateCloud");
 
-    private String login;
-    private String passHash;
-    private boolean overrideOption = true;
-    private boolean syncingOption = false;
+    private String            login;
+    private String            passHash;
+    private boolean           overrideOption = true;
+    private boolean           syncingOption = false;
 
     public ClientSettings() throws IOException {
         if (!rootDir.exists()) {

@@ -1,5 +1,8 @@
-package by.bsuir.csan.session;
+package by.bsuir.csan.client;
+import by.bsuir.csan.client.ClientSettings;
 import by.bsuir.csan.helpers.HashHelper;
+import by.bsuir.csan.sessions.ServerSettings;
+import by.bsuir.csan.sessions.Session;
 
 import java.io.*;
 import java.net.Socket;
@@ -7,17 +10,17 @@ import java.util.HashMap;
 
 public class ClientSession extends Session {
 
-    private File           userFilesInfoFile = new File("user_files.info");
+    private File           userFilesHashesSaveFile = new File("user_files.info");
     private ClientSettings clientSettings;
 
-    public ClientSession() throws IOException {
+    public ClientSession(ClientSettings settings) throws IOException {
         super(new Socket(ServerSettings.getServerIP(), ServerSettings.getServerPort()), new File("client.log"));
-        clientSettings = new ClientSettings(); //default settings
-        saveClientFilesInfo(new HashMap<>()); //TODO probably something wrong here
+        this.clientSettings = settings;
+        saveFilesHashesToFile(new HashMap<>()); //TODO probably something wrong here
     }
 
-    private void saveClientFilesInfo(HashMap<File, String> userFiles) {
-        try (FileOutputStream fos = new FileOutputStream(userFilesInfoFile, false)) {
+    private void saveFilesHashesToFile(HashMap<File, String> userFiles) {
+        try (FileOutputStream fos = new FileOutputStream(userFilesHashesSaveFile, false)) {
             ObjectOutputStream out = new ObjectOutputStream(fos);
             out.writeObject(userFiles);
             fos.close();
@@ -27,9 +30,9 @@ public class ClientSession extends Session {
         }
     }
 
-    private HashMap<File, String> getClientFilesInfo() {
+    private HashMap<File, String> getFilesHashesFromFile() {
         HashMap<File, String> oldClientsFiles = null;
-        try (FileInputStream  fin = new FileInputStream(userFilesInfoFile)) {
+        try (FileInputStream  fin = new FileInputStream(userFilesHashesSaveFile)) {
             ObjectInputStream oin = new ObjectInputStream(fin);
 
             oldClientsFiles = (HashMap<File, String>) oin.readObject();
@@ -41,21 +44,19 @@ public class ClientSession extends Session {
         return oldClientsFiles;
     }
 
-    private HashMap<File, String> getFilesIn(File directory) {
-        HashMap<File, String> userFiles = new HashMap<>();
+    private HashMap<File, String> getFilesHashesIn(File directory) {
+        HashMap<File, String> userFilesHashes = new HashMap<>();
         for (File file : directory.listFiles()) {
             if (file.isDirectory()) {
-                userFiles.putAll(getFilesIn(file));
+                userFilesHashes.putAll(getFilesHashesIn(file));
             } else {
-
-                String simplePath = file.getPath().replaceFirst(clientSettings.getRootDir().getPath() + "/", "");
-
-                userFiles.put(new File(simplePath), HashHelper.getHash(file));
+                if (!file.getName().startsWith(".")) {
+                    String shortFilePath = file.getPath().replaceFirst(clientSettings.getRootDir().getPath() + "/", "");
+                    userFilesHashes.put(new File(shortFilePath), HashHelper.getHash(file));
+                }
             }
         }
-
-        userFiles.remove(new File(".DS_Store"));
-        return userFiles;
+        return userFilesHashes;
     }
 
 
@@ -119,8 +120,8 @@ public class ClientSession extends Session {
             if (response.equals(OK_MSG)) {
 
                 HashMap<File, String> serverFiles = receiveFilesHashes();
-                HashMap<File, String> clientFiles = getFilesIn(clientSettings.getRootDir());
-                HashMap<File, String> oldFiles = getClientFilesInfo();
+                HashMap<File, String> clientFiles = getFilesHashesIn(clientSettings.getRootDir());
+                HashMap<File, String> oldFiles = getFilesHashesFromFile();
                 HashMap<File, String> clientFilesToDelete = new HashMap<>();
 
                 System.out.println("BEFORE============================="); //TODO debug
@@ -180,7 +181,7 @@ public class ClientSession extends Session {
                 System.out.println("Server hashes " + serverFiles);
                 System.out.println("Client hashes " + clientFiles);
 
-                saveClientFilesInfo(clientFiles);
+                saveFilesHashesToFile(clientFiles);
             }
 
         }

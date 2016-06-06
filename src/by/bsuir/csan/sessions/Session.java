@@ -1,4 +1,4 @@
-package by.bsuir.csan.session;
+package by.bsuir.csan.sessions;
 
 import java.io.*;
 import java.net.Socket;
@@ -6,40 +6,38 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
 
-abstract class Session extends Thread {
+public abstract class Session extends Thread {
 
-    static final String         OK_MSG = "OK";
-    static final String         NOT_AUTHORIZED_MSG = "YOU ARE NOT AUTHORIZED";
-    static final String         USER_EXISTS_MSG = "USER WITH THIS LOGIN IS ALREADY EXISTS";
-    static final String         USER_NOT_EXIST_MSG = "USER WITH THIS LOGIN AND PASSWORD IS NOT EXIST";
-    static final String         COMMAND_MISSING_MSG = "INCORRECT COMMAND";
-    static final String         START_LOADING_MSG = "LOADING STARTED";
-    static final String         SIGN_CMD = "SIGN";
-    static final String         AUTH_CMD = "AUTH";
+    protected static final String OK_MSG = "OK";
+    protected static final String NOT_AUTHORIZED_MSG = "YOU ARE NOT AUTHORIZED";
+    protected static final String USER_EXISTS_MSG = "USER WITH THIS LOGIN IS ALREADY EXISTS";
+    protected static final String USER_NOT_EXIST_MSG = "USER WITH THIS LOGIN AND PASSWORD IS NOT EXIST";
+    protected static final String COMMAND_MISSING_MSG = "INCORRECT COMMAND";
+    protected static final String START_LOADING_MSG = "LOADING STARTED";
+    protected static final String SIGN_CMD = "SIGN";
+    protected static final String AUTH_CMD = "AUTH";
 
-    static final String         HASH_CMD = "HASH";
-    static final String         STORE_CMD = "STORE";
-    static final String         RETR_CMD = "RETR";
-    static final String         DEL_CMD = "DEL";
-    static final String         QUIT_CMD = "QUIT";
+    protected static final String HASH_CMD = "HASH";
+    protected static final String STORE_CMD = "STORE";
+    protected static final String RETR_CMD = "RETR";
+    protected static final String DEL_CMD = "DEL";
+    protected static final String QUIT_CMD = "QUIT";
 
-    private static final int    BUFFER_SIZE = 1024;
-    private static final String CONNECT_MSG = "CONNECTED";
-    private static final String DISCONNECT_MSG = "DISCONNECTED";
+    private static final int      BUFFER_SIZE = 1024;
+    private static final String   CONNECT_MSG = "CONNECTED";
+    private static final String   DISCONNECT_MSG = "DISCONNECTED";
 
-    private byte[]              buffer = new byte[BUFFER_SIZE];
+    private Socket                socket;
+    private DataInputStream       dataInputStream;
 
-    enum LogType                {TO, FROM}
+    private DataOutputStream      dataOutputStream;
+    private FileOutputStream      logFileStream;
+    private boolean               sessionInActiveState;
 
-    private Socket              socket;
-    private DataInputStream     dataInputStream;
-    private DataOutputStream    dataOutputStream;
-    private FileOutputStream    logFileStream;
-    private boolean             sessionInActiveState;
+    private byte[]                buffer = new byte[BUFFER_SIZE];
+    private enum LogType          {TO, FROM;}
 
-    protected abstract void handleSessionPermanently();
-
-    Session(Socket socket, File logFile) throws IOException {
+    protected Session(Socket socket, File logFile) throws IOException {
         this.socket = socket;
         this.dataInputStream = new DataInputStream(socket.getInputStream());
         this.dataOutputStream = new DataOutputStream(socket.getOutputStream());
@@ -68,23 +66,25 @@ abstract class Session extends Thread {
         closeSession();
     }
 
-    String receiveMessage() {
+    protected abstract void handleSessionPermanently();
+
+    protected String receiveMessage() {
         String textMessage = (String) receive();
         log(textMessage, LogType.FROM);
         return textMessage;
     }
 
-    void sendMessage(String message) {
+    protected void sendMessage(String message) {
         send(message);
         log(message, LogType.TO);
     }
 
-    String getResponse(String request) {
+    protected String getResponse(String request) {
         sendMessage(request);
         return receiveMessage();
     }
 
-    void sendFile(File file) {
+    protected void sendFile(File file) {
         try (FileInputStream fin = new FileInputStream(file)) {
 
             int length;
@@ -99,7 +99,7 @@ abstract class Session extends Thread {
         }
     }
 
-    File receiveFile(File file) {
+    protected File receiveFile(File file) {
         try (FileOutputStream fos = new FileOutputStream(file, false)) {
 
             file.getParentFile().mkdirs();
@@ -120,11 +120,11 @@ abstract class Session extends Thread {
         return file;
     }
 
-    void sendFilesHashes(HashMap<File, String> filesHashes) {
+    protected void sendFilesHashes(HashMap<File, String> filesHashes) {
         send(filesHashes);
     }
 
-    HashMap<File, String> receiveFilesHashes() {
+    protected HashMap<File, String> receiveFilesHashes() {
         return (HashMap<File, String>) receive();
     }
 

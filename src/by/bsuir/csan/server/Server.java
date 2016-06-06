@@ -1,8 +1,7 @@
 package by.bsuir.csan.server;
 
 import by.bsuir.csan.server.users.UsersManager;
-import by.bsuir.csan.session.ServerSettings;
-import by.bsuir.csan.session.ServerSession;
+import by.bsuir.csan.sessions.ServerSettings;
 
 import java.io.*;
 import java.net.ServerSocket;

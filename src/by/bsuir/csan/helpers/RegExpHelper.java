@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 
 public class RegExpHelper {
     public static ArrayList<String> getMatches (String line, String regExp) {
-        Matcher matches = Pattern.compile(regExp).matcher(line);
+        Matcher           matches = Pattern.compile(regExp).matcher(line);
         ArrayList<String> matchesList  = new ArrayList<>();
         while (matches.find()) {
             matchesList.add(matches.group());

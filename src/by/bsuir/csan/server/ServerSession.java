@@ -1,8 +1,9 @@
-package by.bsuir.csan.session;
+package by.bsuir.csan.server;
 
 import by.bsuir.csan.helpers.RegExpHelper;
 import by.bsuir.csan.server.users.User;
 import by.bsuir.csan.server.users.UsersManager;
+import by.bsuir.csan.sessions.Session;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -18,7 +19,7 @@ public class ServerSession extends Session {
 
     public ServerSession(Socket clientSocket, File logFile) throws IOException {
         super(clientSocket, logFile);
-        new Thread(this).start(); //start handling this session: receiving messages from client
+        new Thread(this).start(); //start handling this sessions: receiving messages from client
     }
 
     @Override

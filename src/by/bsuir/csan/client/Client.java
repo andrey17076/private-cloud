@@ -1,8 +1,6 @@
 package by.bsuir.csan.client;
 
 import by.bsuir.csan.client.gui.*;
-import by.bsuir.csan.session.ClientSession;
-import by.bsuir.csan.session.ClientSettings;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -99,11 +97,11 @@ public class Client extends Application {
         primaryStage.show();
 
         /**
-         * Try to establish connection with server and start client session.
+         * Try to establish connection with server and start client sessions.
          * In a case, when server is unavailable, app will be closed due to it's useless.
          */
         try {
-            clientSession = new ClientSession();
+            clientSession = new ClientSession(clientSettings);
         } catch (IOException | NullPointerException e) {
             AlertBox.display("Can't connect to server!");
             primaryStage.close();

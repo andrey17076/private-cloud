@@ -10,9 +10,9 @@ public class HashHelper {
 
     private static byte[] createChecksum(File file) throws IOException, NoSuchAlgorithmException {
         FileInputStream fis =  new FileInputStream(file);
-        byte[] buffer = new byte[1024];
-        MessageDigest complete = MessageDigest.getInstance("MD5");
-        int numRead;
+        byte[]          buffer = new byte[1024];
+        MessageDigest   complete = MessageDigest.getInstance("MD5");
+        int             numRead;
         do {
             numRead = fis.read(buffer);
             if (numRead > 0) {
