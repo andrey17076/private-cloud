@@ -11,13 +11,13 @@ import java.lang.reflect.Method;
 import java.net.Socket;
 import java.util.ArrayList;
 
-public class ServerSession extends Session {
+class ServerSession extends Session {
 
     private static final String HANDLER_HEAD = "handle";
     private static final String WORD_REGEX = "\\S+";
     private User                user;
 
-    public ServerSession(Socket clientSocket, File logFile) throws IOException {
+    ServerSession(Socket clientSocket, File logFile) throws IOException {
         super(clientSocket, logFile);
         new Thread(this).start(); //start handling this sessions: receiving messages from client
     }
@@ -60,7 +60,7 @@ public class ServerSession extends Session {
             sendMessage(USER_EXISTS_MSG);
         } else {
             UsersManager.addUser(login, passHash);
-            sendMessage(OK_MSG);
+            sendMessage(DONE_MSG);
         }
     }
 
@@ -74,14 +74,15 @@ public class ServerSession extends Session {
             sendMessage(USER_NOT_EXIST_MSG);
         } else {
             this.user = user;
-            sendMessage(OK_MSG);
+            sendMessage(DONE_MSG);
         }
     }
 
     private void handleHASH(String argsLine) {
         if (isAuthorized()) {
-            sendMessage(OK_MSG);
+            sendMessage(START_LOADING_MSG);
             sendFilesHashes(UsersManager.getUserHashes(user));
+            sendMessage(DONE_MSG);
         } else {
             sendMessage(NOT_AUTHORIZED_MSG);
         }
@@ -92,7 +93,7 @@ public class ServerSession extends Session {
             sendMessage(START_LOADING_MSG);
             File file = receiveFile(new File(UsersManager.getUserDirPath(user) + "/" +  shortFilePath));
             UsersManager.addFileTo(user, file);
-            sendMessage(OK_MSG);
+            sendMessage(DONE_MSG);
         } else {
             sendMessage(NOT_AUTHORIZED_MSG);
         }
@@ -103,7 +104,7 @@ public class ServerSession extends Session {
             File file = UsersManager.getFileFrom(user, shortFilePath);
             sendMessage(START_LOADING_MSG);
             sendFile(file);
-            sendMessage(OK_MSG);
+            sendMessage(DONE_MSG);
         } else {
             sendMessage(NOT_AUTHORIZED_MSG);
         }
@@ -111,7 +112,7 @@ public class ServerSession extends Session {
 
     private void handleDEL(String shortFilePath) {
         if (isAuthorized()) {
-            sendMessage(OK_MSG);
+            sendMessage(DONE_MSG);
             UsersManager.deleteFileFrom(user, shortFilePath);
         } else {
             sendMessage(NOT_AUTHORIZED_MSG);
@@ -120,6 +121,6 @@ public class ServerSession extends Session {
 
     private void handleQUIT(String argLine) {
         user = null;
-        sendMessage(OK_MSG);
+        sendMessage(DONE_MSG);
     }
 }

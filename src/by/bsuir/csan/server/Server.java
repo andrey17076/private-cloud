@@ -2,6 +2,7 @@ package by.bsuir.csan.server;
 
 import by.bsuir.csan.server.users.UsersManager;
 import by.bsuir.csan.sessions.ServerSettings;
+import by.bsuir.csan.sessions.Session;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -99,7 +100,7 @@ public class Server extends Thread {
 
     private void stopServer() throws IOException {
         serverInActiveState = false;
-        serverSessions.forEach((session) -> session.closeSession());
+        serverSessions.forEach(Session::closeSession);
         serverSocket.close();
     }
 }

@@ -1,6 +1,7 @@
 package by.bsuir.csan.client;
 
 import by.bsuir.csan.client.gui.*;
+import by.bsuir.csan.client.settings.ClientSettingsManager;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -16,66 +17,39 @@ import java.io.*;
 
 public class Client extends Application {
 
-    private static ClientSettings clientSettings;
     private ClientSession clientSession;
 
     private OptionButton syncingButton = new OptionButton("Turn on syncing", "Turn off syncing", false);
     private OptionButton overrideButton = new OptionButton("Turn on file override", "Turn off file override", false);
 
     public static void main(String[] args) {
+        ClientSettingsManager.loadSettingsFromFile();
         launch(args);
     }
 
     private String chooseShareableFolder(Stage stage) {
         DirectoryChooser directoryChooser = new DirectoryChooser();
         File chosenDirectory = directoryChooser.showDialog(stage);
-
-        try {
-            clientSettings.setRootDir(chosenDirectory);
-        } catch (IOException e) {
-            AlertBox.display("Can't update config file");
-        }
-        clientSession.setClientSettings(clientSettings);
-
+        ClientSettingsManager.setRootDir(chosenDirectory);
         return chosenDirectory.getPath();
     }
 
     private void handleSyncingButton() {
         if (syncingButton.isActive()) {
-            try {
-                clientSettings.setSyncingOption(false);
-            } catch (IOException e) {
-                AlertBox.display("Can't update config file");
-            }
-            clientSession.setClientSettings(clientSettings);
+            ClientSettingsManager.setSyncingOption(false);
             AlertBox.display("Deactivated");
         } else {
-            try {
-                clientSettings.setSyncingOption(true);
-            } catch (IOException e) {
-                AlertBox.display("Can't update config file");
-            }
-            clientSession.setClientSettings(clientSettings);
+            ClientSettingsManager.setSyncingOption(true);
             AlertBox.display("Activated");
         }
     }
 
     private void handleOverrideButton() {
         if (overrideButton.isActive()) {
-            try {
-                clientSettings.setOverrideOption(false);
-            } catch (IOException e) {
-                AlertBox.display("Can't update config file");
-            }
-            clientSession.setClientSettings(clientSettings);
+            ClientSettingsManager.setOverrideOption(false);
             AlertBox.display("Deactivated");
         } else {
-            try {
-                clientSettings.setOverrideOption(true);
-            } catch (IOException e) {
-                AlertBox.display("Can't update config file");
-            }
-            clientSession.setClientSettings(clientSettings);
+            ClientSettingsManager.setOverrideOption(true);
             AlertBox.display("Activated");
         }
     }
@@ -101,18 +75,15 @@ public class Client extends Application {
          * In a case, when server is unavailable, app will be closed due to it's useless.
          */
         try {
-            clientSession = new ClientSession(clientSettings);
-        } catch (IOException | NullPointerException e) {
+            clientSession = new ClientSession();
+        } catch (IOException e) {
             AlertBox.display("Can't connect to server!");
             primaryStage.close();
         }
 
         primaryStage.setOnCloseRequest(event -> {
-            try {
-                clientSession.quit();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            clientSession.quit();
+            clientSession.closeSession();
         });
 
         //Syncing Settings Titled VBox
@@ -127,7 +98,6 @@ public class Client extends Application {
         syncDirChooseButton.setOnAction(event -> syncDirPathTextField.setText(chooseShareableFolder(primaryStage)));
 
         syncingButton.setOnActivation(event -> handleSyncingButton());
-
         overrideButton.setOnActivation(event -> handleOverrideButton());
 
         syncSettingsVBox.addAll(
@@ -145,13 +115,8 @@ public class Client extends Application {
         OptionButton logButton = new OptionButton("Log in", "Log out", false);
         logButton.setOnActivation(event -> {
             if (logButton.isActive()) {
-                try {
-                    loginLabel.setText("You're not authorized");
-                    syncSettingsVBox.setDisable(true);
-                    clientSession.setClientSettings(new ClientSettings());
-                } catch (IOException e) {
-                    AlertBox.display("Can't log out");
-                }
+                loginLabel.setText("You're not authorized");
+                syncSettingsVBox.setDisable(true);
             } else {
                 AccountBox.display("Log in");
                 String login = AccountBox.getLogin();
@@ -159,46 +124,30 @@ public class Client extends Application {
                 if (login.equals("") | passHash.equals("")) {
                     logButton.setState(true);
                 } else {
-                    try {
-                        clientSettings.setLogin(login);
-                        clientSettings.setPassHash(passHash);
-                        String response = clientSession.authorize(clientSettings);
-                        if (response.equals("OK")) {
-                            loginLabel.setText("Login: " + login);
-                            clientSession.start();
-                            syncSettingsVBox.setDisable(false);
-                            AlertBox.display("Singed in");
-                        } else {
-                            AlertBox.display(response);
-                            logButton.setState(true);
-                        }
-                    } catch (Exception e) {
-                        AlertBox.display("Can't sign in!");
+                    ClientSettingsManager.setLoginInfo(login, passHash);
+                    String response = clientSession.authorize();
+                    if (response.equals("DONE")) {
+                        loginLabel.setText("Login: " + login);
+                        syncSettingsVBox.setDisable(false);
+                    } else {
                         logButton.setState(true);
                     }
+                    AlertBox.display(response);
                 }
             }
         });
 
         Button signUpButton = new Button("Sign up");
         signUpButton.setOnAction(event -> {
-                AccountBox.display(signUpButton.getText());
-                String login = AccountBox.getLogin();
-                String passHash = AccountBox.getPassHash();
-                if (login.equals("") | passHash.equals("")) {
-                    //user canceled account box
-                } else {
-                    try {
-                        String response = clientSession.signUp(login, passHash);
-                        if (response.equals("OK")) {
-                            AlertBox.display("Singed up");
-                        } else {
-                            AlertBox.display(response);
-                        }
-                    } catch (Exception e) {
-                        AlertBox.display("Can't sign up!");
-                    }
-                }
+            AccountBox.display(signUpButton.getText());
+            String login = AccountBox.getLogin();
+            String passHash = AccountBox.getPassHash();
+            if (login.equals("") | passHash.equals("")) {
+                //user canceled account box
+            } else {
+                String response = clientSession.signUp();
+                AlertBox.display(response);
+            }
         });
 
         Region emptySpace = new Region();
@@ -214,27 +163,21 @@ public class Client extends Application {
          * Try to get client's settings of app.
          * If file with settings can't be loaded, we use default ones.
          */
-        try {
-            clientSettings = ClientSettings.getClientSettings();
+        ClientSettingsManager.loadSettingsFromFile();
 
-            if (clientSettings.getLogin() != null) {
+        if (ClientSettingsManager.getLogin() != null) {
 
-                String response = clientSession.authorize(clientSettings);
-                clientSession.start();
-                if (response.equals("OK")) {
-                    loginLabel.setText("Login: " + clientSettings.getLogin());
-                    logButton.setState(true);
-                    syncSettingsVBox.setDisable(false);
-                    AlertBox.display("Singed in");
-                }
+            String response = clientSession.authorize();
+            if (response.equals("DONE")) {
+                loginLabel.setText("Login: " + ClientSettingsManager.getLogin());
+                logButton.setState(true);
+                syncSettingsVBox.setDisable(false);
             }
-
-            syncingButton.setState(clientSettings.getSyncingOption());
-            overrideButton.setState(clientSettings.getOverrideOption());
-            syncDirPathTextField.setText(clientSettings.getRootDir().getPath());
-
-        } catch (IOException | ClassNotFoundException e) {
-            AlertBox.display("Can't load settings file");
         }
+
+        syncingButton.setState(ClientSettingsManager.getSyncingOption());
+        overrideButton.setState(ClientSettingsManager.getOverrideOption());
+        syncDirPathTextField.setText(ClientSettingsManager.getRootDir().getPath());
+        clientSession.start();
     }
 }

@@ -17,10 +17,6 @@ public class TitledVBox extends TitledPane {
         setContent(vBox);
     }
 
-    public void add(Node e) {
-        vBox.getChildren().add(e);
-    }
-
     public void addAll(Node... e) {
         vBox.getChildren().addAll(e);
     }

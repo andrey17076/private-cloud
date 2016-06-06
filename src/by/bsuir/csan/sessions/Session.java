@@ -8,15 +8,15 @@ import java.util.HashMap;
 
 public abstract class Session extends Thread {
 
-    protected static final String OK_MSG = "OK";
+    protected static final String DONE_MSG = "DONE";
     protected static final String NOT_AUTHORIZED_MSG = "YOU ARE NOT AUTHORIZED";
     protected static final String USER_EXISTS_MSG = "USER WITH THIS LOGIN IS ALREADY EXISTS";
     protected static final String USER_NOT_EXIST_MSG = "USER WITH THIS LOGIN AND PASSWORD IS NOT EXIST";
     protected static final String COMMAND_MISSING_MSG = "INCORRECT COMMAND";
     protected static final String START_LOADING_MSG = "LOADING STARTED";
+
     protected static final String SIGN_CMD = "SIGN";
     protected static final String AUTH_CMD = "AUTH";
-
     protected static final String HASH_CMD = "HASH";
     protected static final String STORE_CMD = "STORE";
     protected static final String RETR_CMD = "RETR";
@@ -35,7 +35,7 @@ public abstract class Session extends Thread {
     private boolean               sessionInActiveState;
 
     private byte[]                buffer = new byte[BUFFER_SIZE];
-    private enum LogType          {TO, FROM;}
+    private enum LogType          {TO, FROM}
 
     protected Session(Socket socket, File logFile) throws IOException {
         this.socket = socket;
@@ -100,9 +100,9 @@ public abstract class Session extends Thread {
     }
 
     protected File receiveFile(File file) {
-        try (FileOutputStream fos = new FileOutputStream(file, false)) {
+        file.getParentFile().mkdirs();
 
-            file.getParentFile().mkdirs();
+        try (FileOutputStream fos = new FileOutputStream(file, false)) {
 
             while (dataInputStream.available() == 0);
 

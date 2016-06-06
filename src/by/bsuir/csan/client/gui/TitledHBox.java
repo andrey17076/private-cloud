@@ -17,10 +17,6 @@ public class TitledHBox extends TitledPane {
         setContent(hBox);
     }
 
-    public void add(Node e) {
-        hBox.getChildren().add(e);
-    }
-
     public void addAll(Node... e) {
         hBox.getChildren().addAll(e);
     }
