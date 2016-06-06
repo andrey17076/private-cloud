@@ -35,9 +35,9 @@ abstract class Session extends Thread {
 
     private Socket           socket;
     private boolean          sessionInActiveState;
-    enum LogType             {TO, FROM}
+    enum    LogType          {TO, FROM}
 
-    protected abstract void handleSessionPermanently() throws IOException;
+    protected abstract void handleSessionPermanently();
 
     Session(Socket socket, File logFile) throws IOException {
         this.socket = socket;
@@ -59,12 +59,18 @@ abstract class Session extends Thread {
         }
     }
 
+    @Override
+    public void run() {
+        while (sessionInActiveState) {
+            handleSessionPermanently();
+        }
+        closeSession();
+    }
+
     void log(String logMessage, LogType type) {
         String timeStamp = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime());
-        logMessage = "[" + timeStamp + "]: " +
-                type.name() + " " +
-                socket.getInetAddress().getHostAddress() + ": "
-                + logMessage + "\n";
+        String address = socket.getInetAddress().getHostAddress();
+        logMessage = "[" + timeStamp + "]: " + type.name() + " " + address + ": " + logMessage + "\n";
         try {
             logFileStream.write(logMessage.getBytes());
         } catch (IOException e) {
@@ -72,89 +78,86 @@ abstract class Session extends Thread {
         }
     }
 
-    String receiveMessage() throws IOException {
-
-        while (dataInputStream.available() == 0) ;
-
-        int messageLength = dataInputStream.readInt();
-        byte[] message = new byte[messageLength];
-        dataInputStream.readFully(message, 0, messageLength);
-        String textMessage = new String(message);
-
+    String receiveMessage() {
+        String textMessage = (String) receive();
         log(textMessage, LogType.FROM);
         return textMessage;
     }
 
-    void sendMessage(String message) throws IOException {
-        dataOutputStream.writeInt(message.length());
-        dataOutputStream.write(message.getBytes());
-        dataOutputStream.flush();
+    void sendMessage(String message) {
+        send(message);
         log(message, LogType.TO);
     }
 
-    String getResponse(String request) throws IOException {
+    String getResponse(String request) {
         sendMessage(request);
         return receiveMessage();
     }
 
-    void sendFile(File file) throws IOException {
-        FileInputStream fin = new FileInputStream(file);
+    void sendFile(File file) {
+        try (FileInputStream fin = new FileInputStream(file)) {
 
-        int length;
-        while ((length = fin.read(buffer)) > 0) {
-            dataOutputStream.write(buffer, 0, length);
-            dataOutputStream.flush();
+            int length;
+            while ((length = fin.read(buffer)) > 0) {
+                dataOutputStream.write(buffer, 0, length);
+                dataOutputStream.flush();
+            }
+
+            fin.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
-        fin.close();
     }
 
-    File receiveFile(File file) throws IOException {
+    File receiveFile(File file) {
+        try (FileOutputStream fos = new FileOutputStream(file, false)) {
 
-        while (dataInputStream.available() == 0);
+            file.getParentFile().mkdirs();
+            file.createNewFile();
 
-        file.getParentFile().mkdirs();
-        file.createNewFile();
+            while (dataInputStream.available() == 0);
 
-        FileOutputStream fos = new FileOutputStream(file, false);
+            int length;
+            while (dataInputStream.available() > 0) {
+                length = dataInputStream.read(buffer, 0, BUFFER_SIZE);
+                fos.write(buffer, 0, length);
+                fos.flush();
+            }
+            fos.close();
 
-        int length;
-        while (dataInputStream.available() > 0) {
-            length = dataInputStream.read(buffer, 0, BUFFER_SIZE);
-            fos.write(buffer, 0, length);
-            fos.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        fos.close();
         return file;
     }
 
-    void sendFilesHashes(HashMap<File, String> filesHashes) throws IOException {
-
-        ObjectOutputStream oos = new ObjectOutputStream(dataOutputStream);
-        oos.writeObject(filesHashes);
-        oos.flush();
-
+    void sendFilesHashes(HashMap<File, String> filesHashes) {
+        send(filesHashes);
     }
 
-    HashMap<File, String> receiveFilesHashes() throws IOException, ClassNotFoundException {
-
-        while (dataInputStream.available() == 0);
-
-        ObjectInputStream ois = new ObjectInputStream(dataInputStream);
-
-        return (HashMap<File, String>) ois.readObject();
+    HashMap<File, String> receiveFilesHashes() {
+        return (HashMap<File, String>) receive();
     }
 
-    @Override
-    public void run() {
+    private Object receive() {
+        Object receivedObject = null;
         try {
-            while (sessionInActiveState) {
-                handleSessionPermanently();
-            }
+            while (dataInputStream.available() == 0);
+            ObjectInputStream ois = new ObjectInputStream(dataInputStream);
+            receivedObject = ois.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return receivedObject;
+    }
+
+    private void send(Object object) {
+        try {
+            ObjectOutputStream oos = new ObjectOutputStream(dataOutputStream);
+            oos.writeObject(object);
+            oos.flush();
         } catch (IOException e) {
-            //just socket input or/and output was closed
-        } finally {
-            closeSession();
+            e.printStackTrace();
         }
     }
 }

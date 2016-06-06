@@ -23,15 +23,15 @@ public class ServerSession extends Session {
     }
 
     @Override
-    protected void handleSessionPermanently() throws IOException {
-        String message = receiveMessage();
+    protected void handleSessionPermanently() {
+        String            message = receiveMessage();
         ArrayList<String> messageWords = RegExpHelper.getMatches(message, WORD_REGEX);
-        String command = messageWords.get(0);
-        String appendedArgsLine = message.replaceFirst(command + "\\s", "");
+        String            command = messageWords.get(0);
+        String            appendedArgsLine = message.replaceFirst(command + "\\s", "");
         performCommand(command, appendedArgsLine);
     }
 
-    private void performCommand(String command, String argsLine) throws IOException {
+    private void performCommand(String command, String argsLine) {
         try {
             Method handleMethod = getClass().getDeclaredMethod(HANDLER_HEAD + command, String.class);
             handleMethod.setAccessible(true);
@@ -43,7 +43,7 @@ public class ServerSession extends Session {
         }
     }
 
-    private boolean isAuthorized() throws IOException {
+    private boolean isAuthorized() {
         if (user == null) {
             sendMessage(NOT_AUTHORIZED_MSG);
             return false;
@@ -51,7 +51,7 @@ public class ServerSession extends Session {
         return true;
     }
 
-    private void handleSIGN(String argsLine) throws IOException {
+    private void handleSIGN(String argsLine) {
         ArrayList<String> args = RegExpHelper.getMatches(argsLine, WORD_REGEX);
         String            login = args.get(0);
         String            passHash = args.get(1);
@@ -64,7 +64,7 @@ public class ServerSession extends Session {
         }
     }
 
-    private void handleAUTH(String argsLine) throws IOException {
+    private void handleAUTH(String argsLine) {
         ArrayList<String> args = RegExpHelper.getMatches(argsLine, WORD_REGEX);
         String            login = args.get(0);
         String            passHash = args.get(1);
@@ -78,7 +78,7 @@ public class ServerSession extends Session {
         }
     }
 
-    private void handleHASH(String argsLine) throws IOException {
+    private void handleHASH(String argsLine) {
         if (isAuthorized()) {
             sendMessage(OK_MSG);
             sendFilesHashes(UsersManager.getUserInfo(user));
@@ -87,7 +87,7 @@ public class ServerSession extends Session {
         }
     }
 
-    private void handleSTORE(String argsLine) throws IOException {
+    private void handleSTORE(String argsLine) {
         if (isAuthorized()) {
             sendMessage(START_LOADING_MSG);
             File file = receiveFile(new File(user.getUserDir().getPath() + "/" +  argsLine));
@@ -98,7 +98,7 @@ public class ServerSession extends Session {
         }
     }
 
-    private void handleRETR(String argsLine) throws IOException {
+    private void handleRETR(String argsLine) {
         if (isAuthorized()) {
             File file = UsersManager.getFileFrom(user, argsLine);
             if (file == null) {
@@ -113,7 +113,7 @@ public class ServerSession extends Session {
         }
     }
 
-    private void handleDEL(String argsLine) throws IOException {
+    private void handleDEL(String argsLine) {
         if (isAuthorized()) {
             File file = UsersManager.getFileFrom(user, argsLine);
             if (file == null) {
@@ -127,7 +127,7 @@ public class ServerSession extends Session {
         }
     }
 
-    private void handleQUIT(String argLine) throws IOException {
+    private void handleQUIT(String argLine) {
         user = null;
         sendMessage(OK_MSG);
     }

@@ -7,7 +7,7 @@ import java.util.HashMap;
 
 public class ClientSession extends Session {
 
-    private File userFilesInfoFile = new File("user_files.info");
+    private File           userFilesInfoFile = new File("user_files.info");
     private ClientSettings clientSettings;
 
     public ClientSession() throws IOException {
@@ -16,20 +16,28 @@ public class ClientSession extends Session {
         saveClientFilesInfo(new HashMap<>()); //TODO probably something wrong here
     }
 
-    private void saveClientFilesInfo(HashMap<File, String> userFiles) throws IOException {
-        FileOutputStream fos = new FileOutputStream(userFilesInfoFile, false);
-        ObjectOutputStream out = new ObjectOutputStream(fos);
-        out.writeObject(userFiles);
-        fos.close();
-        out.close();
+    private void saveClientFilesInfo(HashMap<File, String> userFiles) {
+        try (FileOutputStream fos = new FileOutputStream(userFilesInfoFile, false)) {
+            ObjectOutputStream out = new ObjectOutputStream(fos);
+            out.writeObject(userFiles);
+            fos.close();
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    private HashMap<File, String> getClientFilesInfo() throws IOException, ClassNotFoundException {
-        FileInputStream fin = new FileInputStream(userFilesInfoFile);
-        ObjectInputStream oin = new ObjectInputStream(fin);
-        HashMap<File, String> oldClientsFiles = (HashMap<File, String>) oin.readObject();
-        oin.close();
-        fin.close();
+    private HashMap<File, String> getClientFilesInfo() {
+        HashMap<File, String> oldClientsFiles = null;
+        try (FileInputStream  fin = new FileInputStream(userFilesInfoFile)) {
+            ObjectInputStream oin = new ObjectInputStream(fin);
+
+            oldClientsFiles = (HashMap<File, String>) oin.readObject();
+            oin.close();
+            fin.close();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
         return oldClientsFiles;
     }
 
@@ -51,7 +59,7 @@ public class ClientSession extends Session {
     }
 
 
-    private String storeFileOnServer(File file) throws IOException {
+    private String storeFileOnServer(File file) {
 
         String fullPath = clientSettings.getRootDir().getPath() + "/" + file.getPath();
 
@@ -63,7 +71,7 @@ public class ClientSession extends Session {
         return response;
     }
 
-    private String retrieveFileFromServer(File file) throws IOException {
+    private String retrieveFileFromServer(File file) {
 
         String fullPath = clientSettings.getRootDir().getPath() + "/" + file.getPath();
 
@@ -75,7 +83,7 @@ public class ClientSession extends Session {
         return response;
     }
 
-    private String deleteFileOnServer(File file) throws IOException {
+    private String deleteFileOnServer(File file) {
         return getResponse(DEL_CMD + " " + file.getPath());
     }
 
@@ -100,82 +108,81 @@ public class ClientSession extends Session {
     }
 
     @Override
-    protected void handleSessionPermanently() throws IOException {
+    protected void handleSessionPermanently() {
         try {
             Thread.sleep(30 * 1000);
-            if (clientSettings != null && clientSettings.getSyncingOption()) {
-                String response = getResponse(HASH_CMD);
-                if (response.equals(OK_MSG)) {
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        if (clientSettings != null && clientSettings.getSyncingOption()) {
+            String response = getResponse(HASH_CMD);
+            if (response.equals(OK_MSG)) {
 
-                    HashMap<File, String> serverFiles = receiveFilesHashes();
-                    HashMap<File, String> clientFiles = getFilesIn(clientSettings.getRootDir());
-                    HashMap<File, String> oldFiles = getClientFilesInfo();
-                    HashMap<File, String> clientFilesToDelete = new HashMap<>();
+                HashMap<File, String> serverFiles = receiveFilesHashes();
+                HashMap<File, String> clientFiles = getFilesIn(clientSettings.getRootDir());
+                HashMap<File, String> oldFiles = getClientFilesInfo();
+                HashMap<File, String> clientFilesToDelete = new HashMap<>();
 
-                    System.out.println("BEFORE============================="); //TODO debug
-                    System.out.println("Server hashes " + serverFiles);
-                    System.out.println("Client hashes " + clientFiles);
-                    System.out.println("Old    hashes " + oldFiles);
-                    System.out.println("===================================");
+                System.out.println("BEFORE============================="); //TODO debug
+                System.out.println("Server hashes " + serverFiles);
+                System.out.println("Client hashes " + clientFiles);
+                System.out.println("Old    hashes " + oldFiles);
+                System.out.println("===================================");
 
-                    for (File clientFile : clientFiles.keySet()) {
+                for (File clientFile : clientFiles.keySet()) {
 
-                        if (serverFiles.containsKey(clientFile)) {
+                    if (serverFiles.containsKey(clientFile)) {
 
-                            boolean differentHashesOnClientAndServer =
-                                    !serverFiles.get(clientFile).equals(clientFiles.get(clientFile));
+                        boolean differentHashesOnClientAndServer =
+                                !serverFiles.get(clientFile).equals(clientFiles.get(clientFile));
 
-                            if (differentHashesOnClientAndServer) {
-                                boolean sameHashesOnClientAndLastClientSync =
-                                        clientFiles.get(clientFile).equals(oldFiles.get(clientFile));
+                        if (differentHashesOnClientAndServer) {
+                            boolean sameHashesOnClientAndLastClientSync =
+                                    clientFiles.get(clientFile).equals(oldFiles.get(clientFile));
 
-                                if (sameHashesOnClientAndLastClientSync) {
-                                    retrieveFileFromServer(clientFile);
-                                    clientFiles.put(clientFile, serverFiles.get(clientFile));
-                                } else if (clientSettings.getOverrideOption()) {
-                                    storeFileOnServer(clientFile);
-                                } else {
-                                    retrieveFileFromServer(clientFile);
-                                    clientFiles.put(clientFile, serverFiles.get(clientFile));
-                                }
+                            if (sameHashesOnClientAndLastClientSync) {
+                                retrieveFileFromServer(clientFile);
+                                clientFiles.put(clientFile, serverFiles.get(clientFile));
+                            } else if (clientSettings.getOverrideOption()) {
+                                storeFileOnServer(clientFile);
+                            } else {
+                                retrieveFileFromServer(clientFile);
+                                clientFiles.put(clientFile, serverFiles.get(clientFile));
                             }
-                            serverFiles.remove(clientFile);
-                        } else if (oldFiles.containsKey(clientFile)) {
-                            clientFilesToDelete.put(clientFile, clientFiles.get(clientFile));
-                        } else {
-                            storeFileOnServer(clientFile);
                         }
+                        serverFiles.remove(clientFile);
+                    } else if (oldFiles.containsKey(clientFile)) {
+                        clientFilesToDelete.put(clientFile, clientFiles.get(clientFile));
+                    } else {
+                        storeFileOnServer(clientFile);
                     }
-
-                    System.out.println("PRE================================"); //TODO debug
-                    System.out.println("Rest of   Server hashes " + serverFiles);
-                    System.out.println("To del on client hashes " + clientFilesToDelete);
-
-                    for (File serverFile : serverFiles.keySet()) { //On the server; Don't on the client side
-                        if (oldFiles.containsKey(serverFile)) {
-                            deleteFileOnServer(serverFile);
-                        } else {
-                            retrieveFileFromServer(serverFile);
-                            clientFiles.put(serverFile, serverFiles.get(serverFile));
-                        }
-                    }
-
-                    clientFilesToDelete.keySet().forEach((file) -> {
-                        clientFiles.remove(file);
-                        new File(clientSettings.getRootDir() + "/" + file.getPath()).delete();
-                    });
-
-                    System.out.println("AFTER=============================="); //TODO debug
-                    System.out.println("Server hashes " + serverFiles);
-                    System.out.println("Client hashes " + clientFiles);
-
-                    saveClientFilesInfo(clientFiles);
                 }
 
+                System.out.println("PRE================================"); //TODO debug
+                System.out.println("Rest of   Server hashes " + serverFiles);
+                System.out.println("To del on client hashes " + clientFilesToDelete);
+
+                for (File serverFile : serverFiles.keySet()) { //On the server; Don't on the client side
+                    if (oldFiles.containsKey(serverFile)) {
+                        deleteFileOnServer(serverFile);
+                    } else {
+                        retrieveFileFromServer(serverFile);
+                        clientFiles.put(serverFile, serverFiles.get(serverFile));
+                    }
+                }
+
+                clientFilesToDelete.keySet().forEach((file) -> {
+                    clientFiles.remove(file);
+                    new File(clientSettings.getRootDir() + "/" + file.getPath()).delete();
+                });
+
+                System.out.println("AFTER=============================="); //TODO debug
+                System.out.println("Server hashes " + serverFiles);
+                System.out.println("Client hashes " + clientFiles);
+
+                saveClientFilesInfo(clientFiles);
             }
 
-        } catch (InterruptedException | ClassNotFoundException e) {
-            e.printStackTrace();
         }
     }
 }
