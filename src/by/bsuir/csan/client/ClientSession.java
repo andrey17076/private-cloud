@@ -44,9 +44,7 @@ class ClientSession extends Session {
         return getResponse(DEL_CMD + " " + file.getPath());
     }
 
-    String signUp() {
-        String login = ClientSettingsManager.getLogin();
-        String passHash = ClientSettingsManager.getPassHash();
+    String signUp(String login, String passHash) {
         return getResponse(SIGN_CMD + " " + login + " " + passHash);
     }
 
@@ -56,8 +54,9 @@ class ClientSession extends Session {
         return getResponse(AUTH_CMD + " " + login + " " + passHash);
     }
 
-    String quit() {
-        return getResponse(QUIT_CMD);
+    void quit() {
+        sendMessage(QUIT_CMD);
+        closeSession();
     }
 
     @Override

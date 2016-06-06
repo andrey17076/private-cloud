@@ -19,39 +19,19 @@ public class Client extends Application {
 
     private ClientSession clientSession;
 
+    private TitledVBox syncSettingsVBox = new TitledVBox("Sharing Settings");
+    private TitledHBox accountSettingsTitleHBox = new TitledHBox("Account Settings");
+    private Label loginLabel = new Label("You're not authorized");
+
+    private OptionButton logButton = new OptionButton("Log in", "Log out", false);
+    private Button signUpButton = new Button("Sign up");
+
     private OptionButton syncingButton = new OptionButton("Turn on syncing", "Turn off syncing", false);
     private OptionButton overrideButton = new OptionButton("Turn on file override", "Turn off file override", false);
 
     public static void main(String[] args) {
         ClientSettingsManager.loadSettingsFromFile();
         launch(args);
-    }
-
-    private String chooseShareableFolder(Stage stage) {
-        DirectoryChooser directoryChooser = new DirectoryChooser();
-        File chosenDirectory = directoryChooser.showDialog(stage);
-        ClientSettingsManager.setRootDir(chosenDirectory);
-        return chosenDirectory.getPath();
-    }
-
-    private void handleSyncingButton() {
-        if (syncingButton.isActive()) {
-            ClientSettingsManager.setSyncingOption(false);
-            AlertBox.display("Deactivated");
-        } else {
-            ClientSettingsManager.setSyncingOption(true);
-            AlertBox.display("Activated");
-        }
-    }
-
-    private void handleOverrideButton() {
-        if (overrideButton.isActive()) {
-            ClientSettingsManager.setOverrideOption(false);
-            AlertBox.display("Deactivated");
-        } else {
-            ClientSettingsManager.setOverrideOption(true);
-            AlertBox.display("Activated");
-        }
     }
 
     @Override
@@ -81,13 +61,9 @@ public class Client extends Application {
             primaryStage.close();
         }
 
-        primaryStage.setOnCloseRequest(event -> {
-            clientSession.quit();
-            clientSession.closeSession();
-        });
+        primaryStage.setOnCloseRequest(event -> clientSession.quit());
 
         //Syncing Settings Titled VBox
-        TitledVBox syncSettingsVBox = new TitledVBox("Sharing Settings");
         syncSettingsVBox.setDisable(true);
 
         TextField syncDirPathTextField = new TextField();
@@ -107,48 +83,10 @@ public class Client extends Application {
         //End of Syncing Setting Titled VBox
 
         //Account Setting Titled HBox
-        TitledHBox accountSettingsTitleHBox = new TitledHBox("Account Settings");
-
-        Label loginLabel = new Label("You're not authorized");
         loginLabel.setPrefHeight(27);
 
-        OptionButton logButton = new OptionButton("Log in", "Log out", false);
-        logButton.setOnActivation(event -> {
-            if (logButton.isActive()) {
-                loginLabel.setText("You're not authorized");
-                syncSettingsVBox.setDisable(true);
-            } else {
-                AccountBox.display("Log in");
-                String login = AccountBox.getLogin();
-                String passHash = AccountBox.getPassHash();
-                if (login.equals("") | passHash.equals("")) {
-                    logButton.setState(true);
-                } else {
-                    ClientSettingsManager.setLoginInfo(login, passHash);
-                    String response = clientSession.authorize();
-                    if (response.equals("DONE")) {
-                        loginLabel.setText("Login: " + login);
-                        syncSettingsVBox.setDisable(false);
-                    } else {
-                        logButton.setState(true);
-                    }
-                    AlertBox.display(response);
-                }
-            }
-        });
-
-        Button signUpButton = new Button("Sign up");
-        signUpButton.setOnAction(event -> {
-            AccountBox.display(signUpButton.getText());
-            String login = AccountBox.getLogin();
-            String passHash = AccountBox.getPassHash();
-            if (login.equals("") | passHash.equals("")) {
-                //user canceled account box
-            } else {
-                String response = clientSession.signUp();
-                AlertBox.display(response);
-            }
-        });
+        logButton.setOnActivation(event -> handleLogInButton());
+        signUpButton.setOnAction(event -> handleSingUpButton());
 
         Region emptySpace = new Region();
         HBox.setHgrow(emptySpace, Priority.ALWAYS);
@@ -179,5 +117,68 @@ public class Client extends Application {
         overrideButton.setState(ClientSettingsManager.getOverrideOption());
         syncDirPathTextField.setText(ClientSettingsManager.getRootDir().getPath());
         clientSession.start();
+    }
+
+    private String chooseShareableFolder(Stage stage) {
+        DirectoryChooser directoryChooser = new DirectoryChooser();
+        File chosenDirectory = directoryChooser.showDialog(stage);
+        ClientSettingsManager.setRootDir(chosenDirectory);
+        return chosenDirectory.getPath();
+    }
+
+    private void handleLogInButton() {
+        if (logButton.isActive()) {
+            loginLabel.setText("You're not authorized");
+            syncSettingsVBox.setDisable(true);
+        } else {
+            AccountBox.display("Log in");
+            String login = AccountBox.getLogin();
+            String passHash = AccountBox.getPassHash();
+            if (login.equals("") | passHash.equals("")) {
+                logButton.setState(true);
+            } else {
+                ClientSettingsManager.setLoginInfo(login, passHash);
+                String response = clientSession.authorize();
+                if (response.equals("DONE")) {
+                    loginLabel.setText("Login: " + login);
+                    syncSettingsVBox.setDisable(false);
+                } else {
+                    logButton.setState(true);
+                }
+                AlertBox.display(response);
+            }
+        }
+    }
+
+    private void handleSingUpButton() {
+        AccountBox.display(signUpButton.getText());
+        String login = AccountBox.getLogin();
+        String passHash = AccountBox.getPassHash();
+        if (login.equals("") | passHash.equals("")) {
+            //user canceled account box
+        } else {
+            String response = clientSession.signUp(login, passHash);
+            AlertBox.display(response);
+        }
+    }
+
+    private void handleSyncingButton() {
+        if (syncingButton.isActive()) {
+            ClientSettingsManager.setSyncingOption(false);
+            AlertBox.display("Deactivated");
+        } else {
+            ClientSettingsManager.setSyncingOption(true);
+            AlertBox.display("Activated");
+        }
+    }
+
+    private void handleOverrideButton() {
+        if (overrideButton.isActive()) {
+            ClientSettingsManager.setOverrideOption(false);
+            AlertBox.display("Deactivated");
+        } else {
+            ClientSettingsManager.setOverrideOption(true);
+            AlertBox.display("Activated");
+        }
     }
 }

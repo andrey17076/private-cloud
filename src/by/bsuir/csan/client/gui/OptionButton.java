@@ -1,6 +1,5 @@
 package by.bsuir.csan.client.gui;
 
-import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.Button;
 import javafx.scene.input.MouseEvent;

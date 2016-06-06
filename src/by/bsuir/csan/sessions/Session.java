@@ -85,8 +85,10 @@ public abstract class Session extends Thread {
     }
 
     protected void sendFile(File file) {
-        try (FileInputStream fin = new FileInputStream(file)) {
 
+        try {
+            dataOutputStream.writeLong(file.length());
+            FileInputStream fin = new FileInputStream(file);
             int length;
             while ((length = fin.read(buffer)) > 0) {
                 dataOutputStream.write(buffer, 0, length);
@@ -106,9 +108,15 @@ public abstract class Session extends Thread {
 
             while (dataInputStream.available() == 0);
 
+            long fileLength = dataInputStream.readLong();
             int length;
-            while (dataInputStream.available() > 0) {
-                length = dataInputStream.read(buffer, 0, BUFFER_SIZE);
+            while (fileLength > 0) {
+                if ((dataInputStream.available() > fileLength) && (BUFFER_SIZE > fileLength)) {
+                    length = dataInputStream.read(buffer, 0, (int) fileLength);
+                } else {
+                    length = dataInputStream.read(buffer, 0, BUFFER_SIZE);
+                }
+                fileLength -= length;
                 fos.write(buffer, 0, length);
                 fos.flush();
             }
