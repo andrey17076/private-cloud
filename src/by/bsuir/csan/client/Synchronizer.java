@@ -19,16 +19,12 @@ public class Synchronizer {
         }
     }
 
-    public void sync(HashMap<File, String> serverHashes) {
+    public void synchronize(HashMap<File, String> serverHashes) {
 
         HashMap<File, String> clientHashes = getFilesHashesIn(ClientSettingsManager.getRootDir());
-        HashMap<File, String> oldClientHashes = getFilesHashesFromFile();
+        HashMap<File, String> lastClientHashes = getLastFilesHashesFromFile();
+        HashMap<File, String> handledServerHashes = new HashMap<>();
         HashMap<File, String> clientHashesToDelete = new HashMap<>();
-
-        System.out.println("BEFORE============================="); //TODO debug
-        System.out.println("Server hashes " + serverHashes);
-        System.out.println("Client hashes " + clientHashes);
-        System.out.println("Old    hashes " + oldClientHashes);
 
         for (File clientFile : clientHashes.keySet()) {
 
@@ -39,7 +35,7 @@ public class Synchronizer {
 
                 if (differentHashesOnClientAndServer) {
                     boolean sameHashesOnClientAndLastClientSync =
-                            clientHashes.get(clientFile).equals(oldClientHashes.get(clientFile));
+                            clientHashes.get(clientFile).equals(lastClientHashes.get(clientFile));
 
                     if (sameHashesOnClientAndLastClientSync) {
                         clientSession.retrieveFileFromServer(clientFile);
@@ -51,24 +47,11 @@ public class Synchronizer {
                         clientHashes.put(clientFile, serverHashes.get(clientFile));
                     }
                 }
-                serverHashes.remove(clientFile);
-            } else if (oldClientHashes.containsKey(clientFile)) {
+                handledServerHashes.put(clientFile, serverHashes.get(clientFile));
+            } else if (lastClientHashes.containsKey(clientFile)) {
                 clientHashesToDelete.put(clientFile, clientHashes.get(clientFile));
             } else {
                 clientSession.storeFileOnServer(clientFile);
-            }
-        }
-
-        System.out.println("PRE================================"); //TODO debug
-        System.out.println("Rest of   Server hashes " + serverHashes);
-        System.out.println("To del on client hashes " + clientHashesToDelete);
-
-        for (File serverFile : serverHashes.keySet()) { //On the server; Don't on the client side
-            if (oldClientHashes.containsKey(serverFile)) {
-                clientSession.deleteFileOnServer(serverFile);
-            } else {
-                clientSession.retrieveFileFromServer(serverFile);
-                clientHashes.put(serverFile, serverHashes.get(serverFile));
             }
         }
 
@@ -77,9 +60,17 @@ public class Synchronizer {
             new File(ClientSettingsManager.getRootDir().getPath() + "/" + file.getPath()).delete();
         });
 
-        System.out.println("AFTER=============================="); //TODO debug
-        System.out.println("Server hashes " + serverHashes);
-        System.out.println("Client hashes " + clientHashes);
+        handledServerHashes.forEach(serverHashes::remove);
+
+        //On server; don't on client side
+        for (File serverFile : serverHashes.keySet()) {
+            if (lastClientHashes.containsKey(serverFile)) {
+                clientSession.deleteFileOnServer(serverFile);
+            } else {
+                clientSession.retrieveFileFromServer(serverFile);
+                clientHashes.put(serverFile, serverHashes.get(serverFile));
+            }
+        }
 
         saveFilesHashesToFile(clientHashes);
     }
@@ -95,7 +86,7 @@ public class Synchronizer {
         }
     }
 
-    private HashMap<File, String> getFilesHashesFromFile() {
+    private HashMap<File, String> getLastFilesHashesFromFile() {
         HashMap<File, String> oldClientsFilesHashes = new HashMap<>();
         try (FileInputStream fin = new FileInputStream(userFilesHashesSaveFile)) {
             ObjectInputStream oin = new ObjectInputStream(fin);

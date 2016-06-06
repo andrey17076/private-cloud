@@ -71,7 +71,7 @@ class ClientSession extends Session {
             if (response.equals(START_LOADING_MSG)) {
                 HashMap<File, String> serverHashes = receiveFilesHashes();
                 if (receiveMessage().equals(DONE_MSG)) {
-                    synchronizer.sync(serverHashes);
+                    synchronizer.synchronize(serverHashes);
                 }
             }
         }

@@ -6,7 +6,7 @@ class ClientSettings implements Serializable {
 
     private String  login;
     private String  passHash;
-    private boolean overrideOption = true;
+    private boolean overrideOption = false;
     private boolean syncingOption = false;
     private File    rootDir = new File(System.getProperty("user.home") + "/PrivateCloud");
 
