@@ -2,7 +2,7 @@ package by.bsuir.csan.session;
 
 import by.bsuir.csan.helpers.RegExpHelper;
 import by.bsuir.csan.server.users.User;
-import by.bsuir.csan.server.users.UsersInfo;
+import by.bsuir.csan.server.users.UsersManager;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -56,10 +56,10 @@ public class ServerSession extends Session {
         String            login = args.get(0);
         String            passHash = args.get(1);
 
-        if (UsersInfo.isUserExists(login)) {
+        if (UsersManager.isUserExists(login)) {
             sendMessage(USER_EXISTS_MSG);
         } else {
-            UsersInfo.addUser(new User(login, passHash));
+            UsersManager.addUser(new User(login, passHash));
             sendMessage(OK_MSG);
         }
     }
@@ -68,7 +68,7 @@ public class ServerSession extends Session {
         ArrayList<String> args = RegExpHelper.getMatches(argsLine, WORD_REGEX);
         String            login = args.get(0);
         String            passHash = args.get(1);
-        User              user = UsersInfo.getUser(login, passHash);
+        User              user = UsersManager.getUser(login, passHash);
 
         if (user == null) {
             sendMessage(USER_NOT_EXIST_MSG);
@@ -81,7 +81,7 @@ public class ServerSession extends Session {
     private void handleHASH(String argsLine) throws IOException {
         if (isAuthorized()) {
             sendMessage(OK_MSG);
-            sendFilesHashes(UsersInfo.getUserInfo(user));
+            sendFilesHashes(UsersManager.getUserInfo(user));
         } else {
             sendMessage(NOT_AUTHORIZED_MSG);
         }
@@ -91,7 +91,7 @@ public class ServerSession extends Session {
         if (isAuthorized()) {
             sendMessage(START_LOADING_MSG);
             File file = receiveFile(new File(user.getUserDir().getPath() + "/" +  argsLine));
-            UsersInfo.addFileTo(user, file);
+            UsersManager.addFileTo(user, file);
             sendMessage(OK_MSG);
         } else {
             sendMessage(NOT_AUTHORIZED_MSG);
@@ -100,12 +100,13 @@ public class ServerSession extends Session {
 
     private void handleRETR(String argsLine) throws IOException {
         if (isAuthorized()) {
-            File file = UsersInfo.getFileFrom(user, argsLine);
+            File file = UsersManager.getFileFrom(user, argsLine);
             if (file == null) {
                 sendMessage(NOT_FOUND_MSG);
             } else {
-                sendMessage(OK_MSG);
+                sendMessage(START_LOADING_MSG);
                 sendFile(file);
+                sendMessage(OK_MSG);
             }
         } else {
             sendMessage(NOT_AUTHORIZED_MSG);
@@ -114,21 +115,13 @@ public class ServerSession extends Session {
 
     private void handleDEL(String argsLine) throws IOException {
         if (isAuthorized()) {
-            File file = UsersInfo.getFileFrom(user, argsLine);
+            File file = UsersManager.getFileFrom(user, argsLine);
             if (file == null) {
                 sendMessage(NOT_FOUND_MSG);
             } else {
                 sendMessage(OK_MSG);
-                UsersInfo.deleteFileFrom(user, file);
+                UsersManager.deleteFileFrom(user, file);
             }
-        } else {
-            sendMessage(NOT_AUTHORIZED_MSG);
-        }
-    }
-
-    private void handleCHECK(String argsLine) throws IOException {
-        if (isAuthorized()) {
-            sendMessage(OK_MSG);
         } else {
             sendMessage(NOT_AUTHORIZED_MSG);
         }

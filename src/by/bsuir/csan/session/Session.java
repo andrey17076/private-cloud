@@ -26,7 +26,6 @@ abstract class Session extends Thread {
     static final String      STORE_CMD = "STORE";
     static final String      RETR_CMD = "RETR";
     static final String      DEL_CMD = "DEL";
-    static final String      CHECK_CMD = "CHECK";
     static final String      QUIT_CMD = "QUIT";
 
     private byte[]           buffer = new byte[BUFFER_SIZE];

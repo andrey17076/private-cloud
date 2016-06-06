@@ -6,7 +6,7 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Set;
 
-public class UsersInfo implements Serializable {
+public class UsersManager implements Serializable {
 
     private static final String                         ROOT_DIR_CREATED_MSG = "USERS INFO DIR CREATED";
 

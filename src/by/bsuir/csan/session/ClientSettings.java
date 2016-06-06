@@ -14,7 +14,7 @@ public class ClientSettings implements Serializable {
 
     public ClientSettings() throws IOException {
         if (!rootDir.exists()) {
-            rootDir.mkdir();
+            rootDir.mkdirs();
         }
         saveClientSettings();
     }

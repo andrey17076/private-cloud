@@ -13,7 +13,7 @@ public class User implements Serializable {
     public User(String login, String passHash) throws IOException {
         this.login = login;
         this.passHash = passHash;
-        this.userDir = new File(UsersInfo.getUsersRootDir() + "/" + Integer.toString(login.hashCode()));
+        this.userDir = new File(UsersManager.getUsersRootDir() + "/" + Integer.toString(login.hashCode()));
     }
 
     public String getLogin() {

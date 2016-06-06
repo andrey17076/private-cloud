@@ -1,6 +1,6 @@
 package by.bsuir.csan.server;
 
-import by.bsuir.csan.server.users.UsersInfo;
+import by.bsuir.csan.server.users.UsersManager;
 import by.bsuir.csan.session.ServerSettings;
 import by.bsuir.csan.session.ServerSession;
 
@@ -66,7 +66,7 @@ public class Server extends Thread {
 
     private void runServer() {
         System.out.println(START_MSG);
-        UsersInfo.loadUsersInfo();
+        UsersManager.loadUsersInfo();
         Thread listenerThread = new Thread(this);
         listenerThread.start();
         performDialog();
