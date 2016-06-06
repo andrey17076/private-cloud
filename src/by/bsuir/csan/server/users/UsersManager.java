@@ -1,55 +1,27 @@
 package by.bsuir.csan.server.users;
 
-import by.bsuir.csan.helpers.HashHelper;
-
 import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Set;
 
 public class UsersManager implements Serializable {
 
-    private static final String                         ROOT_DIR_CREATED_MSG = "USERS INFO DIR CREATED";
+    private static final String    ROOT_DIR_CREATED_MSG = "USERS FILES DIR CREATED";
+    private static final File      rootDir = new File("root");
+    private static final File      usersSaveFile = new File(rootDir.getPath() + "/users.save");
+    private static ArrayList<User> users = new ArrayList<>();
 
-    private static final File                           rootDir = new File("root");
-    private static final File                           usersInfoFile = new File(rootDir.getPath() + "/users.info");
-    private static HashMap<User, HashMap<File, String>> usersInfo = new HashMap<>();
+    public static void loadUsersFromSave() {
 
-    private static void saveUsersInfo() {
-        try {
-            FileOutputStream fos = new FileOutputStream(usersInfoFile);
-            ObjectOutputStream out = new ObjectOutputStream(fos);
-            out.writeObject(usersInfo);
-            fos.close();
-            out.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (!rootDir.exists()) {
+            rootDir.mkdir();
+            saveUsersToFile();
+            System.out.println(ROOT_DIR_CREATED_MSG);
         }
-    }
 
-    public static HashMap<File, String> getUserInfo(User user) {
-        return usersInfo.get(user);
-    }
-
-    public static Set<User> getUsers() {
-        return usersInfo.keySet();
-    }
-
-    public static File getUsersRootDir() {
-        return rootDir;
-    }
-
-    public static void loadUsersInfo() {
-        try {
-
-            if (!rootDir.exists()) {
-                rootDir.mkdir();
-                saveUsersInfo();
-                System.out.println(ROOT_DIR_CREATED_MSG);
-            }
-
-            FileInputStream fin = new FileInputStream(usersInfoFile);
+        try (FileInputStream  fin = new FileInputStream(usersSaveFile)) {
             ObjectInputStream oin = new ObjectInputStream(fin);
-            usersInfo = (HashMap<User, HashMap<File, String>>) oin.readObject();
+            users = (ArrayList<User>) oin.readObject();
             oin.close();
             fin.close();
         } catch (IOException | ClassNotFoundException e) {
@@ -57,41 +29,26 @@ public class UsersManager implements Serializable {
         }
     }
 
-    public static void addUser(User user) {
-        usersInfo.put(user, new HashMap<>());
-
-        File userDir = user.getUserDir();
-        if (!userDir.exists()) {
-            userDir.mkdir();
-        }
-
-        saveUsersInfo();
+    public static void addUser(String login, String passHash) {
+        User user = new User(login, passHash, rootDir.getPath());
+        users.add(user);
+        saveUsersToFile();
     }
 
-    public static void addFileTo(User user, File file) {
-        String hash = HashHelper.getHash(file);
-        String filePath = file.getPath().replaceFirst(user.getUserDir().getPath() + "/", "");
-        usersInfo.get(user).put(new File(filePath), hash);
-        saveUsersInfo();
-    }
-
-    public static void deleteFileFrom(User user, File file) {
-        file.delete();
-        String filePath = file.getPath().replaceFirst(user.getUserDir().getPath() + "/", "");
-        usersInfo.get(user).remove(new File(filePath));
-    }
-
-    public static File getFileFrom(User user, String filePath) {
-        if (usersInfo.get(user).containsKey(new File(filePath))) {
-            String serverFilePath = user.getUserDir() + "/" + filePath;
-            return new File(serverFilePath);
+    public static User getUser(String login, String passHash) {
+        for (User user : users) {
+            if (user.getLogin().equals(login)) {
+                if (user.getPassHash().equals(passHash)) {
+                    return user;
+                }
+            }
         }
         return null;
     }
 
     public static boolean isUserExists(String login) {
         boolean isExists = false;
-        for (User u : usersInfo.keySet()) {
+        for (User u : users) {
             if (u.getLogin().equals(login)) {
                 isExists = true;
                 break;
@@ -100,14 +57,36 @@ public class UsersManager implements Serializable {
         return isExists;
     }
 
-    public static User getUser(String login, String passHash) {
-        for (User user : usersInfo.keySet()) {
-            if (user.getLogin().equals(login)) {
-                if (user.getPassHash().equals(passHash)) {
-                    return user;
-                }
-            }
+    public static HashMap<File, String> getUserHashes(User user) {
+        return user.getHashes();
+    }
+
+    public static void addFileTo(User user, File file) {
+        user.addFile(file);
+        saveUsersToFile();
+    }
+
+    public static String getUserDirPath(User user) {
+        return user.getUserDirPath();
+    }
+
+    public static void deleteFileFrom(User user, String shortFilePath) {
+        user.deleteFile(shortFilePath);
+        saveUsersToFile();
+    }
+
+    public static File getFileFrom(User user, String shortFilePath) {
+        return user.getFile(shortFilePath);
+    }
+
+    private static void saveUsersToFile() {
+        try (FileOutputStream  fos = new FileOutputStream(usersSaveFile)) {
+            ObjectOutputStream out = new ObjectOutputStream(fos);
+            out.writeObject(users);
+            fos.close();
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        return null;
     }
 }

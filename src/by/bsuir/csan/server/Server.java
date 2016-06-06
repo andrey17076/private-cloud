@@ -66,7 +66,7 @@ public class Server extends Thread {
 
     private void runServer() {
         System.out.println(START_MSG);
-        UsersManager.loadUsersInfo();
+        UsersManager.loadUsersFromSave();
         Thread listenerThread = new Thread(this);
         listenerThread.start();
         performDialog();
